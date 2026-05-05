@@ -1,21 +1,4 @@
-from .utils import (
-    discretize_interval,
-    display_renders,
-    even_bin_count,
-    neat_int,
-    print_discrete_space,
-    render_env_in_notebook,
-    run_cartpole_episode,
-    run_frozen_lake_episode,
-)
+from . import utils as _utils
+from .utils import *  # noqa: F401,F403
 
-__all__ = [
-    "discretize_interval",
-    "display_renders",
-    "even_bin_count",
-    "neat_int",
-    "print_discrete_space",
-    "render_env_in_notebook",
-    "run_cartpole_episode",
-    "run_frozen_lake_episode",
-]
+__all__ = _utils.__all__
