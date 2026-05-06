@@ -1,90 +1,63 @@
 from __future__ import annotations
 
-from abc import abstractmethod
+from collections.abc import Callable
 
+import gymnasium as gym
 import numpy as np
 
-from rl_suite.algorithms.agent_base import AbstractAgent
 from rl_suite.utils.environment import RLEnvironmentRunner
 
 
-class _MCOffPolicyBase(AbstractAgent):
-    """Abstract MC agent: policy without environment discretization."""
+class OffPolicyMCAgent:
+    """Weighted importance-sampling MC control over a discretized environment."""
 
-    def __init__(self, gamma):
+    def __init__(
+        self,
+        *,
+        gamma: float = 0.9,
+        behavior: str | Callable = "uniform",
+        epsilon: float = 0.1,
+        max_iterations: int = 100000,
+    ):
         self.gamma = gamma
-        self.MAX_ITERATIONS = 100000
+        self.behavior = behavior
+        self.epsilon = epsilon
+        self.max_iterations = max_iterations
+        self.table = None
+        self.pi = None
+        self.output_logs: list[str] = []
 
-    @abstractmethod
-    def discretize_spaces(self):
-        pass
-
-    @abstractmethod
-    def get_discrete(self):
-        pass
-
-    def select_action(self, state, b=None):
-        s = self.get_discrete(state)
-        if b is not None:
-            return b(s)
-        return self.pi[s]
-
-    def greedy_update(self):
-        self.pi = np.argmax(self.table[..., 0], axis=-1)
-
-    def behavioral(self, state=None, action=None):
-        if state is not None and action is not None:
-            return 0.5
-        return np.random.choice(2, 1)[0]
+    def select_action(self, state, behaviour=None):
+        if behaviour is not None:
+            return behaviour(state)
+        return int(self.pi[state])
 
     def control(
         self,
-        env,
+        env: gym.Env | RLEnvironmentRunner,
         *,
         num_timesteps_goal: int = 10000,
         close_env: bool = True,
-    ):
+        test_interval: int = 1000,
+    ) -> list[str]:
         runner = RLEnvironmentRunner.from_env(env)
+        self._initialize_policy(runner)
 
-        def execute_environment(select_action, behaviour=None):
-            return runner.run_episode(select_action, behaviour)
-
-        self.table = np.random.random_sample(self.table_dims)
-        self.table[..., 1] = 0
-        self.greedy_update()
-
-        output_logs = []
+        self.output_logs = []
         success = False
-
-        for num_iter in range(1, self.MAX_ITERATIONS + 1):
-            if not num_iter % 1000:
-                ep = execute_environment(self.select_action)
-                output_logs.append(
-                    f"Iteration {num_iter}, Test {num_iter // 1000}: "
-                    f"target policy episode length {len(ep)}"
+        for num_iter in range(1, self.max_iterations + 1):
+            if test_interval and not num_iter % test_interval:
+                episode = self._run_episode(runner)
+                self.output_logs.append(
+                    f"Iteration {num_iter}, Test {num_iter // test_interval}: "
+                    f"target policy episode length {len(episode)}"
                 )
-                if len(ep) == num_timesteps_goal:
+                if len(episode) == num_timesteps_goal:
                     success = True
                     break
 
-            G, W = 0, 1
-            b = self.behavioral
-
-            episode = execute_environment(self.select_action, b)
-            for t in range(len(episode) - 2, -1, -1):
-                G = G * self.gamma + episode[t + 1][-1]
-                cont_state, action, _ = episode[t]
-                state = self.get_discrete(cont_state)
-                q_value, c_value = self.table[state][action]
-                c_value += W
-                q_value = q_value + (W / c_value) * (G - q_value)
-                self.table[state][action] = [q_value, c_value]
-
-                optimal_action = np.argmax(self.table[state][..., 0])
-                self.pi[state] = optimal_action
-                if optimal_action != action:
-                    continue
-                W *= 1 / b(state, action)
+            episode = self._run_episode(runner, self.behavioral)
+            self._learn_from_episode(episode)
 
         if success:
             print(
@@ -92,10 +65,84 @@ class _MCOffPolicyBase(AbstractAgent):
                 f"{num_timesteps_goal} timesteps."
             )
         else:
-            print(f"Failure to meet goal after {self.MAX_ITERATIONS} iterations.")
+            print(f"Failure to meet goal after {self.max_iterations} iterations.")
         if close_env:
             runner.close()
-        return output_logs
+        return self.output_logs
+
+    def greedy_update(self):
+        self.pi = np.argmax(self.table[..., 0], axis=-1)
+
+    def behavioral(self, state=None, action=None):
+        if callable(self.behavior):
+            return self.behavior(state, action)
+        if self.behavior == "uniform":
+            return self._uniform_behavior(state, action)
+        if self.behavior == "epsilon_soft":
+            return self._epsilon_soft_behavior(state, action)
+        raise ValueError(f"Unsupported behavior policy: {self.behavior!r}")
+
+    def _initialize_policy(self, runner: RLEnvironmentRunner) -> None:
+        state_shape = self._state_shape(runner)
+        num_actions = runner.action_space.n
+        self.table = np.random.random_sample((*state_shape, num_actions, 2))
+        self.table[..., 1] = 0
+        self.greedy_update()
+
+    def _state_shape(self, runner: RLEnvironmentRunner) -> tuple[int, ...]:
+        observation_space = runner.observation_space
+        if hasattr(observation_space, "n"):
+            return (observation_space.n,)
+        if hasattr(observation_space, "nvec"):
+            return tuple(int(x) for x in np.asarray(observation_space.nvec).flat)
+        if not runner.discrete_space:
+            runner.discretize_spaces()
+        return tuple(len(space) for space in runner.discrete_space)
+
+    def _run_episode(
+        self,
+        runner: RLEnvironmentRunner,
+        behaviour: Callable | None = None,
+    ) -> list[tuple]:
+        return runner.run_episode(
+            self.select_action,
+            behaviour,
+            discretize_actions=True,
+            store_initial_state=True,
+        )
+
+    def _learn_from_episode(self, episode: list[tuple]) -> None:
+        returns, weight = 0, 1
+        for t in range(len(episode) - 2, -1, -1):
+            returns = returns * self.gamma + episode[t + 1][-1]
+            state, action, *rest = episode[t]
+            probability = rest[0] if len(rest) == 2 else self.behavioral(state, action)
+            q_value, c_value = self.table[state][action]
+            c_value += weight
+            q_value = q_value + (weight / c_value) * (returns - q_value)
+            self.table[state][action] = [q_value, c_value]
+
+            optimal_action = int(np.argmax(self.table[state][..., 0]))
+            self.pi[state] = optimal_action
+            if optimal_action != action:
+                continue
+            weight *= 1 / probability
+
+    def _uniform_behavior(self, state=None, action=None):
+        num_actions = self.table.shape[-2]
+        if state is not None and action is not None:
+            return 1 / num_actions
+        return int(np.random.choice(num_actions))
+
+    def _epsilon_soft_behavior(self, state=None, action=None):
+        greedy = int(self.pi[state])
+        num_actions = self.table.shape[-2]
+        probabilities = np.full(num_actions, self.epsilon / (num_actions - 1))
+        probabilities[greedy] = 1 - self.epsilon
+        if action is not None:
+            return float(probabilities[action])
+        action = int(np.random.choice(num_actions, p=probabilities))
+        return action, float(probabilities[action])
 
 
-__all__ = ["_MCOffPolicyBase"]
+__all__ = ["OffPolicyMCAgent"]

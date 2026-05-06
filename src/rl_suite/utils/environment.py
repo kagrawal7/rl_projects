@@ -221,7 +221,12 @@ class RLEnvironmentRunner:
             action, probability = self._normalize_action_output(action_output)
 
             next_state, reward, terminated, truncated, _ = self.env.step(action)
-            stored_state = state if store_initial_state else next_state
+            if store_initial_state:
+                stored_state = action_state if discretize_actions else state
+            else:
+                stored_state = (
+                    self.get_discrete(next_state) if discretize_actions else next_state
+                )
             if probability is None:
                 episode.append((stored_state, action, reward))
             else:
