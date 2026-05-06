@@ -1,4 +1,4 @@
-from .off_policy.off_policy_agent import _OffPolicyAgent
+from ._off_policy._off_policy_control import _OffPolicyAgent
 
 
 class _MCAgent:

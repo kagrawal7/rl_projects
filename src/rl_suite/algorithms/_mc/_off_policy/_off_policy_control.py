@@ -8,7 +8,7 @@ import numpy as np
 from rl_suite.utils.environment import RLEnvironmentRunner
 
 
-class OffPolicyMCAgent:
+class _OffPolicyAgent:
     """Weighted importance-sampling MC control over a discretized environment."""
 
     def __init__(
@@ -145,4 +145,3 @@ class OffPolicyMCAgent:
         return action, float(probabilities[action])
 
 
-__all__ = ["OffPolicyMCAgent"]
