@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 from math import ceil
 
+# https://community.latenode.com/t/how-to-render-gymnasium-environment-inside-jupyter-without-external-window/30582/4
+
 
 def render_env_in_notebook(env, figsize=(3, 2)):
     """Render a Gymnasium rgb_array environment inside a notebook."""
