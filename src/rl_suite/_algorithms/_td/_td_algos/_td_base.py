@@ -18,7 +18,7 @@ class _TDBaseAgent(AbstractAgent):
         alpha: float = 0.2,
         epsilon: float = 0.15,
         behavior_epsilon: float | None = None,
-        max_iterations: int = 100000,
+        max_iterations: int = 50000,
     ):
         super().__init__(env)
         self.gamma = gamma

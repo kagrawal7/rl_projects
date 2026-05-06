@@ -9,5 +9,5 @@ class _TD:
     def __init__(self, env):
         # self.off_policy = _OffPolicyAgent()
         self.sarsa = _Sarsa(env)
-        self.expected_sara = _QLearning(env)
-        self.q_learning = _ExpectedSarsa(env)
+        self.expected_sarsa = _ExpectedSarsa(env)
+        self.q_learning = _QLearning(env)
