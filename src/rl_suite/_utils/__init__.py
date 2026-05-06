@@ -1,28 +1,29 @@
-# """Utilities package exports.
-
-# This module auto-re-exports public symbols from selected submodules so the
-# package API stays in sync when functions are added/removed in those modules.
-# """
-
-# from importlib import import_module
-
-# _EXPORT_MODULES = (
-#     "environment",
-#     "rendering",
-# )
-
-# __all__: list[str] = []
-# for _module_name in _EXPORT_MODULES:
-#     _module = import_module(f"{__name__}.{_module_name}")
-#     _public_names = getattr(
-#         _module, "__all__", [name for name in vars(_module) if not name.startswith("_")]
-#     )
-#     for _name in _public_names:
-#         globals()[_name] = getattr(_module, _name)
-#     __all__.extend(_public_names)
-
-# __all__ = sorted(set(__all__))
-
+from . import environment, rendering
 from ._utils_class import _Utilities
+from .environment import (
+    DEFAULT_DISCRETIZATION,
+    HumanEnvironmentRunner,
+    RLEnvironmentRunner,
+    discretize_interval,
+    even_bin_count,
+    get_spaces_from_env,
+    neat_int,
+    print_discrete_space,
+)
+from .rendering import display_renders, render_env_in_notebook
 
-__all__ = ["_Utilities"]
+__all__ = [
+    "DEFAULT_DISCRETIZATION",
+    "HumanEnvironmentRunner",
+    "RLEnvironmentRunner",
+    "_Utilities",
+    "discretize_interval",
+    "display_renders",
+    "environment",
+    "even_bin_count",
+    "get_spaces_from_env",
+    "neat_int",
+    "print_discrete_space",
+    "render_env_in_notebook",
+    "rendering",
+]

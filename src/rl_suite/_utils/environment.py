@@ -13,13 +13,13 @@ def even_bin_count(n: int, min_val: int = 6) -> int:
     return n + 1 if n % 2 else n
 
 
-# def discretize_interval(n: int, interval: tuple[float, float]) -> np.ndarray:
-#     """Create symmetric bins around 0 for one scalar observation interval."""
-#     lower_bound, upper_bound = interval
-#     mid = n // 2
-#     lower = np.linspace(lower_bound, 0, mid, endpoint=False)
-#     upper = np.linspace(0, upper_bound, mid + 1)
-#     return np.concatenate([lower, upper])
+def discretize_interval(n: int, interval: tuple[float, float]) -> np.ndarray:
+    """Create symmetric bins around 0 for one scalar observation interval."""
+    lower_bound, upper_bound = interval
+    mid = n // 2
+    lower = np.linspace(lower_bound, 0, mid, endpoint=False)
+    upper = np.linspace(0, upper_bound, mid + 1)
+    return np.concatenate([lower, upper])
 
 
 DEFAULT_DISCRETIZATION = {
@@ -368,6 +368,7 @@ def print_discrete_space(list_of_spaces) -> None:
 
 
 __all__ = [
+    "DEFAULT_DISCRETIZATION",
     "HumanEnvironmentRunner",
     "RLEnvironmentRunner",
     "discretize_interval",

@@ -1,25 +1,69 @@
+from __future__ import annotations
 
-    # "HumanEnvironmentRunner",
-    # "RLEnvironmentRunner",
-    # "discretize_interval",
-    # "even_bin_count",
-    # "get_spaces_from_env",
-    # "neat_int",
-    # "print_discrete_space",
+from . import environment, rendering
+from .environment import (
+    DEFAULT_DISCRETIZATION,
+    HumanEnvironmentRunner,
+    RLEnvironmentRunner,
+    discretize_interval,
+    even_bin_count,
+    get_spaces_from_env,
+    neat_int,
+    print_discrete_space,
+)
+from .rendering import display_renders, render_env_in_notebook
 
-from .environment import HumanEnvironmentRunner
-from .environment import RLEnvironmentRunner
-from .environment import discretize_interval
 
 class _Utilities:
-    def __init__(self, env):
-        self.human_agent = HumanEnvironmentRunner(env)
-        self.rl_agent = RLEnvironmentRunner(env)
+    """Facade for environment runners, discretization helpers, and rendering."""
 
-    # def discretize_interval(self, n: int, interval: tuple[float, float]) -> np.ndarray:
-    #     """Create symmetric bins around 0 for one scalar observation interval."""
-    #     lower_bound, upper_bound = interval
-    #     mid = n // 2
-    #     lower = np.linspace(lower_bound, 0, mid, endpoint=False)
-    #     upper = np.linspace(0, upper_bound, mid + 1)
-    #     return np.concatenate([lower, upper])
+    environment = environment
+    rendering = rendering
+
+    DEFAULT_DISCRETIZATION = DEFAULT_DISCRETIZATION
+    HumanEnvironmentRunner = HumanEnvironmentRunner
+    RLEnvironmentRunner = RLEnvironmentRunner
+
+    discretize_interval = staticmethod(discretize_interval)
+    even_bin_count = staticmethod(even_bin_count)
+    get_spaces_from_env = staticmethod(get_spaces_from_env)
+    neat_int = staticmethod(neat_int)
+    print_discrete_space = staticmethod(print_discrete_space)
+
+    display_renders = staticmethod(display_renders)
+    render_env_in_notebook = staticmethod(render_env_in_notebook)
+
+    def __init__(self, env=None, discretization: dict | None = None):
+        self.env = env
+        self.discretization = discretization
+        self.human_agent = None
+        self.rl_agent = None
+        if env is not None:
+            self.bind(env, discretization=discretization)
+
+    def bind(self, env, discretization: dict | None = None) -> "_Utilities":
+        self.env = env
+        self.discretization = discretization
+        self.human_agent = self.HumanEnvironmentRunner(env)
+        self.rl_agent = self.RLEnvironmentRunner(env, discretization=discretization)
+        return self
+
+    def human(self, env=None) -> HumanEnvironmentRunner:
+        env = self._resolve_env(env)
+        return self.HumanEnvironmentRunner(env)
+
+    def rl(self, env=None, discretization: dict | None = None) -> RLEnvironmentRunner:
+        env = self._resolve_env(env)
+        if discretization is None:
+            discretization = self.discretization
+        return self.RLEnvironmentRunner(env, discretization=discretization)
+
+    def _resolve_env(self, env):
+        if env is not None:
+            return env
+        if self.env is None:
+            raise ValueError("No environment is bound to this utilities instance.")
+        return self.env
+
+
+__all__ = ["_Utilities"]
