@@ -7,11 +7,8 @@ package API stays in sync when functions are added/removed in those modules.
 from importlib import import_module
 
 _EXPORT_MODULES = (
-    "signal_expeditor",
-    "cartpole",
-    "frozen_lake",
+    "environment",
     "rendering",
-    "execute_env",
 )
 
 __all__: list[str] = []

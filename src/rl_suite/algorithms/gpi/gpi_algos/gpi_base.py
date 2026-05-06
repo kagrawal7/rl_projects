@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from ...agent_base import AbstractAgent
 
 
@@ -71,4 +71,3 @@ class _GPIBase(AbstractAgent):
     @abstractmethod
     def select_action(self, state):
         pass
-

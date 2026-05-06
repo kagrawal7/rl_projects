@@ -5,10 +5,11 @@ from __future__ import annotations
 import numpy as np
 
 from rl_suite.algorithms.mc.off_policy.off_policy_algos.base import _MCOffPolicyBase
-from rl_suite.utils.cartpole import discretize_interval, even_bin_count
-from rl_suite.utils.signal_expeditor import SignalExpeditor
-
-
+from rl_suite.utils.environment import (
+    RLEnvironmentRunner,
+    discretize_interval,
+    even_bin_count,
+)
 
 
 class Agent1(_MCOffPolicyBase):
@@ -108,10 +109,10 @@ class Agent3(Agent2):
         num_timesteps_goal: int = 10000,
         close_env: bool = True,
     ):
-        expeditor = SignalExpeditor.from_env(env)
+        runner = RLEnvironmentRunner.from_env(env)
 
         def execute_environment(select_action, behaviour=None):
-            return expeditor.execute_environment(select_action, behaviour)
+            return runner.run_episode(select_action, behaviour)
 
         self.table = np.random.random_sample(self.table_dims)
         self.table[..., 1] = 0
@@ -156,5 +157,5 @@ class Agent3(Agent2):
         else:
             print(f"Failure to meet goal after {self.MAX_ITERATIONS} iterations.")
         if close_env:
-            expeditor.close()
+            runner.close()
         return output_logs

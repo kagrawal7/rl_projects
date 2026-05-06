@@ -5,7 +5,7 @@ from abc import abstractmethod
 import numpy as np
 
 from rl_suite.algorithms.agent_base import AbstractAgent
-from rl_suite.utils.signal_expeditor import SignalExpeditor
+from rl_suite.utils.environment import RLEnvironmentRunner
 
 
 class _MCOffPolicyBase(AbstractAgent):
@@ -44,10 +44,10 @@ class _MCOffPolicyBase(AbstractAgent):
         num_timesteps_goal: int = 10000,
         close_env: bool = True,
     ):
-        expeditor = SignalExpeditor.from_env(env)
+        runner = RLEnvironmentRunner.from_env(env)
 
         def execute_environment(select_action, behaviour=None):
-            return expeditor.execute_environment(select_action, behaviour)
+            return runner.run_episode(select_action, behaviour)
 
         self.table = np.random.random_sample(self.table_dims)
         self.table[..., 1] = 0
@@ -94,7 +94,7 @@ class _MCOffPolicyBase(AbstractAgent):
         else:
             print(f"Failure to meet goal after {self.MAX_ITERATIONS} iterations.")
         if close_env:
-            expeditor.close()
+            runner.close()
         return output_logs
 
 

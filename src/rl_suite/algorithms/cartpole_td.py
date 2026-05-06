@@ -6,8 +6,11 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from rl_suite.utils.cartpole import discretize_interval, even_bin_count
-from rl_suite.utils.signal_expeditor import SignalExpeditor
+from rl_suite.utils.environment import (
+    RLEnvironmentRunner,
+    discretize_interval,
+    even_bin_count,
+)
 
 
 class TDAgent(ABC):
@@ -77,7 +80,7 @@ class TDAgent(ABC):
         num_timesteps_goal: int = 10000,
         close_env: bool = True,
     ):
-        expeditor = SignalExpeditor.from_env(env)
+        runner = RLEnvironmentRunner.from_env(env)
         self.Q = np.random.random_sample(self.table_dims)
         self.set_terminals_to_zero()
 
@@ -85,7 +88,7 @@ class TDAgent(ABC):
         success = False
 
         for num_iter in range(1, self.MAX_ITERATIONS + 1):
-            state, _ = expeditor.reset()
+            state, _ = runner.reset()
             state = self.get_discrete(state)
             reward, finished = None, False
 
@@ -95,7 +98,7 @@ class TDAgent(ABC):
                 s = state
                 action = self.select_action(state, self.behaviour)
 
-                state, reward, terminated, truncated, _ = expeditor.step(action)
+                state, reward, terminated, truncated, _ = runner.step(action)
                 state = self.get_discrete(state)
 
                 a, r, s_prime = action, reward, state
@@ -129,7 +132,7 @@ class TDAgent(ABC):
         else:
             print(f"Failure to meet goal after {self.MAX_ITERATIONS} iterations.")
         if close_env:
-            expeditor.close()
+            runner.close()
         return output_logs
 
 
@@ -203,5 +206,7 @@ class AgentC(TDAgent):
     def update_rule(self, s, a, r, s_prime, a_prime):
         greedy_val = np.max(self.Q[s_prime])
         non_greedy_val = np.min(self.Q[s_prime])
-        expected_val_est = greedy_val * (1 - self.epsilon) + non_greedy_val * self.epsilon
+        expected_val_est = (
+            greedy_val * (1 - self.epsilon) + non_greedy_val * self.epsilon
+        )
         return self.gamma * expected_val_est - self.Q[s][a] + r

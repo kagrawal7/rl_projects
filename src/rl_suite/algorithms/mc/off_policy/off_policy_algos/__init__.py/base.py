@@ -1,6 +1,7 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from .....agent_base import AbstractAgent
 import numpy as np
+from rl_suite.utils.environment import RLEnvironmentRunner
 
 
 class _MCOffPolicyBase(AbstractAgent):
@@ -39,10 +40,10 @@ class _MCOffPolicyBase(AbstractAgent):
         num_timesteps_goal: int = 10000,
         close_env: bool = True,
     ):
+        runner = RLEnvironmentRunner.from_env(env)
+
         def execute_environment(select_action, behaviour=None):
-            return run_cartpole_episode(
-                env, select_action, behaviour, close_env=False
-            )
+            return runner.run_episode(select_action, behaviour)
 
         self.table = np.random.random_sample(self.table_dims)
         self.table[..., 1] = 0
@@ -89,5 +90,5 @@ class _MCOffPolicyBase(AbstractAgent):
         else:
             print(f"Failure to meet goal after {self.MAX_ITERATIONS} iterations.")
         if close_env:
-            env.close()
+            runner.close()
         return output_logs
