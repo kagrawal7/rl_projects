@@ -1,5 +1,5 @@
 from ._algorithms import Algorithms
-from ._utils import _Utilities
+from .utils import _Utilities
 
 
 class RLToolbox:

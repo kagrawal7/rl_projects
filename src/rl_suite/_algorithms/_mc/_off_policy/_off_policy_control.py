@@ -21,7 +21,7 @@ class _OffPolicyAgent(AbstractAgent):
         epsilon: float = 0.1,
         max_iterations: int = 100000,
     ):
-        super.__init__(env)
+        super().__init__(env)
         self.gamma = gamma
         self.behavior = behavior
         self.epsilon = epsilon
