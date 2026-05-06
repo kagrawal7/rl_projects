@@ -28,3 +28,6 @@ def display_renders(images, num_cols=4):
 
     fig.subplots_adjust(wspace=0.025, hspace=0.2)
     plt.show()
+
+
+__all__ = ["display_renders", "render_env_in_notebook"]
