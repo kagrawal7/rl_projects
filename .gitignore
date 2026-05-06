@@ -1,5 +1,6 @@
-*/.DS_Store
-*/.venv/
-*/.env/
-*/__pycache__/
-
+**/.DS_Store
+**/.venv/
+**/.env/
+**/__pycache__/
+**/*.egg-info/
+.ruff_cache

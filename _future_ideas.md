@@ -1,0 +1,5 @@
+- slippery for frozen lake
+- better visualization
+- convergence metrics
+- include missing algos from barto and sutton
+- separate folder for base classes?
