@@ -1,7 +1,7 @@
-from .gpi_base import _GPIBase
+from ._gpi_base import _GPIBase
 import numpy as np
 
-class DeterministicPI(_GPIBase):
+class _Deterministic(_GPIBase):
     """Deterministic policy table with policy iteration."""
 
     def __init__(self, env, gamma=0.9, theta=0.02):

@@ -1,6 +1,6 @@
-from .stochastic_gpi import StochasticPI
+from ._stochastic_gpi import _Stochastic
 
-class ValueIterClass(StochasticPI):
+class _ValueIteration(_Stochastic):
     """Stochastic policy init + value iteration for an optimal deterministic policy."""
 
     def __init__(self, env, gamma=0.9, theta=0.02):

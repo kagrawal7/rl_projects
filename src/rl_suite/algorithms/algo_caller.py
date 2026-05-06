@@ -1,4 +1,4 @@
-from .gpi.gpi_agent import _GPIAgent
+from ._gpi._gpi_agent import _GPIAgent
 from ._mc._mc_agent import _MCAgent
 from ._td._td_agent import _TDAgent
 

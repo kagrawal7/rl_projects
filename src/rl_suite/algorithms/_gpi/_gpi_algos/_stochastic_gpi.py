@@ -1,7 +1,7 @@
-from .gpi_base import _GPIBase
+from ._gpi_base import _GPIBase
 import numpy as np
 
-class StochasticPI(_GPIBase):
+class _Stochastic(_GPIBase):
     """Agent that uses a stochastic policy function."""
 
     def __init__(self, env, gamma=0.9, theta=0.02):
