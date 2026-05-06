@@ -2,7 +2,7 @@ from abc import abstractmethod
 from ...agent_base import AbstractAgent
 
 
-class _GPIBase(AbstractAgent):
+class _GPIBaseAgent(AbstractAgent):
     """Base class for an agent that uses a policy function to select an action."""
 
     def __init__(self, env, gamma, theta):

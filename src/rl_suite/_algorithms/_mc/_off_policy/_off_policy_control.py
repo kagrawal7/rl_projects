@@ -5,20 +5,23 @@ from collections.abc import Callable
 import gymnasium as gym
 import numpy as np
 
+from rl_suite._algorithms.agent_base import AbstractAgent
 from rl_suite.utils.environment import RLEnvironmentRunner
 
 
-class _OffPolicyAgent:
+class _OffPolicyAgent(AbstractAgent):
     """Weighted importance-sampling MC control over a discretized environment."""
 
     def __init__(
         self,
+        env,
         *,
         gamma: float = 0.9,
         behavior: str | Callable = "uniform",
         epsilon: float = 0.1,
         max_iterations: int = 100000,
     ):
+        super.__init__(env)
         self.gamma = gamma
         self.behavior = behavior
         self.epsilon = epsilon

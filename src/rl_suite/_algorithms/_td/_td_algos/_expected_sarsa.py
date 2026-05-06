@@ -1,7 +1,7 @@
-from ._td_base import _TDAgent
+from ._td_base import _TDBaseAgent
 import numpy as np
 
-class _ExpectedSarsa(_TDAgent):
+class _ExpectedSarsa(_TDBaseAgent):
     """Expected SARSA with a possibly more exploratory behaviour policy."""
 
     def __init__(self, **kwargs):

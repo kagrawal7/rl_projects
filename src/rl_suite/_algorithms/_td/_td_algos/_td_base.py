@@ -3,14 +3,16 @@ from __future__ import annotations
 import gymnasium as gym
 import numpy as np
 
+from rl_suite._algorithms.agent_base import AbstractAgent
 from rl_suite.utils.environment import RLEnvironmentRunner
 
 
-class _TDAgent:
+class _TDBaseAgent(AbstractAgent):
     """Base tabular TD control agent over a discretized environment runner."""
 
     def __init__(
         self,
+        env,
         *,
         gamma: float = 0.9,
         alpha: float = 0.2,
@@ -18,6 +20,7 @@ class _TDAgent:
         behavior_epsilon: float | None = None,
         max_iterations: int = 100000,
     ):
+        super.__init__(env)
         self.gamma = gamma
         self.alpha = alpha
         self.epsilon = epsilon
@@ -128,4 +131,4 @@ class _TDAgent:
 
 
 
-__all__ = ["ExpectedSarsaAgent", "QLearningAgent", "SarsaAgent", "_TDAgent"]
+__all__ = ["ExpectedSarsaAgent", "QLearningAgent", "SarsaAgent", "_TDBaseAgent"]

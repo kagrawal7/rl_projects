@@ -1,16 +1,24 @@
-from ._gpi._gpi_agent import _GPIAgent
-from ._mc._mc_agent import _MCAgent
-from ._td._td_agent import _TDAgent
+from ._gpi._gpi_agent import _GPI
+from ._mc._mc_agent import _MC
+from ._td._td_agent import _TD
 
 
 class Algorithms:
     """Main client for interacting with the AI Library API."""
 
-    def __init__(self):
+    def __init__(self, env):
         # Initialize resources
-        self.gpi = _GPIAgent()
-        self.mc = _MCAgent()
-        self.td = _TDAgent()
+        self.set_env(env)
+
+    def _init_agents(self):
+        env = self.env
+        self.gpi = _GPI(env)
+        self.mc = _MC(env)
+        self.td = _TD(env)
+    
+    def set_env(self, new_env):
+        self.env = new_env
+        self._init_agents()
         
 
 # from ._gpi._gpi_algos._deterministic_gpi import _Deterministic
