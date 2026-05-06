@@ -4,8 +4,8 @@ import numpy as np
 class DeterministicPI(_GPIBase):
     """Deterministic policy table with policy iteration."""
 
-    def __init__(self, gamma=0.9, theta=0.02):
-        super().__init__(gamma, theta)
+    def __init__(self, env, gamma=0.9, theta=0.02):
+        super().__init__(env, gamma, theta)
 
     def _intialize_policy(self):
         self.policy = [np.random.choice(self.A) for s in range(self.n)]

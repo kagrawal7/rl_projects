@@ -3,8 +3,8 @@ from .stochastic_gpi import StochasticPI
 class ValueIterClass(StochasticPI):
     """Stochastic policy init + value iteration for an optimal deterministic policy."""
 
-    def __init__(self, gamma=0.9, theta=0.02):
-        super().__init__(gamma, theta)
+    def __init__(self, env, gamma=0.9, theta=0.02):
+        super().__init__(env, gamma, theta)
 
     def _value_update(self, s):
         action_vecs = self.p[s]

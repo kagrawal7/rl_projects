@@ -5,7 +5,8 @@ from ...agent_base import AbstractAgent
 class _GPIBase(AbstractAgent):
     """Base class for an agent that uses a policy function to select an action."""
 
-    def __init__(self, gamma, theta):
+    def __init__(self, env, gamma, theta):
+        super().__init__(env)
         self.gamma = gamma
         self.theta = theta
         self.no_policy_set = True

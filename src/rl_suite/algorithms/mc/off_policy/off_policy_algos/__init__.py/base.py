@@ -7,7 +7,8 @@ from rl_suite.utils.environment import RLEnvironmentRunner
 class _MCOffPolicyBase(AbstractAgent):
     """Abstract MC agent: policy without environment discretization (subclasses implement)."""
 
-    def __init__(self, gamma):
+    def __init__(self, env, gamma):
+        super().__init__(env)
         self.gamma = gamma
         self.MAX_ITERATIONS = 100000
 

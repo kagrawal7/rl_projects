@@ -4,8 +4,8 @@ import numpy as np
 class StochasticPI(_GPIBase):
     """Agent that uses a stochastic policy function."""
 
-    def __init__(self, gamma=0.9, theta=0.02):
-        super().__init__(gamma, theta)
+    def __init__(self, env, gamma=0.9, theta=0.02):
+        super().__init__(env, gamma, theta)
 
     def _intialize_policy(self):
         self.policy = np.full((self.n, self.k), 1 / self.k)

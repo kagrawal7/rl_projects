@@ -3,6 +3,9 @@ from abc import ABC, abstractmethod
 
 class AbstractAgent(ABC):
     """An abstract class to be used as a base class for agents."""
+    def __init__(self, env):
+        super().__init__()
+        self.env = env
 
     def get_env_info(self, env):
         if hasattr(env, "get_spaces"):
