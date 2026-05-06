@@ -8,3 +8,4 @@ Create a Utils class so you dont have to manually export each new function. Ditt
 
 
 only the boilerplate code is AI generated.
+
