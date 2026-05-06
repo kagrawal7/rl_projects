@@ -2,104 +2,16 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-
 import numpy as np
 
-from rl_suite.utils.cartpole import discretize_interval, even_bin_count, run_cartpole_episode
+from rl_suite.algorithms.mc.off_policy.off_policy_algos.base import _MCOffPolicyBase
+from rl_suite.utils.cartpole import discretize_interval, even_bin_count
+from rl_suite.utils.signal_expeditor import SignalExpeditor
 
 
-class AbstractAgent(ABC):
-    """Abstract MC agent: policy without environment discretization (subclasses implement)."""
-
-    def __init__(self, gamma):
-        self.gamma = gamma
-        self.MAX_ITERATIONS = 100000
-
-    @abstractmethod
-    def discretize_spaces(self):
-        pass
-
-    @abstractmethod
-    def get_discrete(self):
-        pass
-
-    def select_action(self, state, b=None):
-        s = self.get_discrete(state)
-        if b is not None:
-            return b(s)
-        return self.pi[s]
-
-    def greedy_update(self):
-        self.pi = np.argmax(self.table[..., 0], axis=-1)
-
-    def behavioral(self, state=None, action=None):
-        if state is not None and action is not None:
-            return 0.5
-        return np.random.choice(2, 1)[0]
-
-    def control(
-        self,
-        env,
-        *,
-        num_timesteps_goal: int = 10000,
-        close_env: bool = True,
-    ):
-        def execute_environment(select_action, behaviour=None):
-            return run_cartpole_episode(
-                env, select_action, behaviour, close_env=False
-            )
-
-        self.table = np.random.random_sample(self.table_dims)
-        self.table[..., 1] = 0
-        self.greedy_update()
-
-        output_logs = []
-        success = False
-
-        for num_iter in range(1, self.MAX_ITERATIONS + 1):
-            if not num_iter % 1000:
-                ep = execute_environment(self.select_action)
-                output_logs.append(
-                    f"Iteration {num_iter}, Test {num_iter // 1000}: "
-                    f"target policy episode length {len(ep)}"
-                )
-                if len(ep) == num_timesteps_goal:
-                    success = True
-                    break
-
-            G, W = 0, 1
-            b = self.behavioral
-
-            episode = execute_environment(self.select_action, b)
-            for t in range(len(episode) - 2, -1, -1):
-                G = G * self.gamma + episode[t + 1][-1]
-                cont_state, A, _ = episode[t]
-                S = self.get_discrete(cont_state)
-                Q, C = self.table[S][A]
-                C += W
-                Q = Q + (W / C) * (G - Q)
-                self.table[S][A] = [Q, C]
-
-                optimal_action = np.argmax(self.table[S][..., 0])
-                self.pi[S] = optimal_action
-                if optimal_action != A:
-                    continue
-                W *= 1 / b(S, A)
-
-        if success:
-            print(
-                f"Success! The agent was able to balance the pole for at least "
-                f"{num_timesteps_goal} timesteps."
-            )
-        else:
-            print(f"Failure to meet goal after {self.MAX_ITERATIONS} iterations.")
-        if close_env:
-            env.close()
-        return output_logs
 
 
-class Agent1(AbstractAgent):
+class Agent1(_MCOffPolicyBase):
     """Off-policy MC with 4D discretization (position, velocity, angle, angular velocity)."""
 
     def __init__(
@@ -134,7 +46,7 @@ class Agent1(AbstractAgent):
         return tuple(map(mapper, range(len(s))))
 
 
-class Agent2(AbstractAgent):
+class Agent2(_MCOffPolicyBase):
     """Off-policy MC with 2D state (cart position and pole angle only)."""
 
     def __init__(self, gamma=0.9, num_bins=100):
@@ -173,12 +85,21 @@ class Agent3(Agent2):
         self.epsilon = epsilon
 
     def behavioral(self, state=None, action=None):
-        s = self.get_discrete(state)
+        s = state if self._is_discrete_state(state) else self.get_discrete(state)
         greedy = self.pi[s]
         non_greedy = greedy ^ 1
         weights = (1 - self.epsilon, self.epsilon)
+        if action is not None:
+            return weights[int(action == non_greedy)]
         action = np.random.choice((greedy, non_greedy), p=weights)
         return (action, weights[int(action == non_greedy)])
+
+    def _is_discrete_state(self, state):
+        return (
+            isinstance(state, tuple)
+            and len(state) == len(self.discrete_space)
+            and all(isinstance(x, (int, np.integer)) for x in state)
+        )
 
     def control(
         self,
@@ -187,10 +108,10 @@ class Agent3(Agent2):
         num_timesteps_goal: int = 10000,
         close_env: bool = True,
     ):
+        expeditor = SignalExpeditor.from_env(env)
+
         def execute_environment(select_action, behaviour=None):
-            return run_cartpole_episode(
-                env, select_action, behaviour, close_env=False
-            )
+            return expeditor.execute_environment(select_action, behaviour)
 
         self.table = np.random.random_sample(self.table_dims)
         self.table[..., 1] = 0
@@ -235,5 +156,5 @@ class Agent3(Agent2):
         else:
             print(f"Failure to meet goal after {self.MAX_ITERATIONS} iterations.")
         if close_env:
-            env.close()
+            expeditor.close()
         return output_logs
