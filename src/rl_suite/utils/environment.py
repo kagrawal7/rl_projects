@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 import gymnasium as gym
+from gymnasium.envs.registration import register, registry
 import numpy as np
 
 
@@ -253,6 +254,121 @@ class RLEnvironmentRunner:
         return {**DEFAULT_DISCRETIZATION, **discretization}
 
 
+class DiscretizedObservationEnv(gym.ObservationWrapper):
+    """Wrap a Box-observation environment with tabular discrete observations."""
+
+    metadata = {"render_modes": []}
+
+    def __init__(
+        self,
+        env: gym.Env | str,
+        discretization: dict | None = None,
+        env_kwargs: dict | None = None,
+        **make_kwargs,
+    ):
+        if isinstance(env, str):
+            kwargs = dict(env_kwargs or {})
+            kwargs.update(make_kwargs)
+            env = gym.make(env, **kwargs)
+        elif make_kwargs:
+            raise TypeError(
+                "Additional environment kwargs can only be used when env is an ID."
+            )
+
+        super().__init__(env)
+        self.discretizer = RLEnvironmentRunner(
+            self.env,
+            discretization=discretization or DEFAULT_DISCRETIZATION,
+        )
+        if not self.discretizer.discrete_space:
+            raise TypeError(
+                "DiscretizedObservationEnv requires a Box observation space."
+            )
+
+        self.discrete_space = self.discretizer.discrete_space
+        self.observation_space = gym.spaces.MultiDiscrete(
+            np.array([len(space) for space in self.discrete_space], dtype=np.int64)
+        )
+
+    def observation(self, observation):
+        """Return the observation as per-feature discrete bin indices."""
+        return np.asarray(self.discretizer.get_discrete(observation), dtype=np.int64)
+
+
+def register_discretized_env(
+    env: gym.Env | str,
+    id: str | None = None,
+    discretization: dict | None = None,
+    env_kwargs: dict | None = None,
+    *,
+    force: bool = False,
+    **registration_kwargs,
+) -> str:
+    """
+    Register a local Gymnasium environment with discretized observations.
+
+    ``env`` can be an environment ID such as ``"CartPole-v1"`` or an existing
+    Gymnasium environment. When an environment instance has a spec, the
+    registration uses its spec ID so each ``gym.make`` call creates a fresh base
+    environment.
+    """
+    env_source, resolved_env_kwargs = _registration_env_source(env, env_kwargs)
+    env_id = id or _default_discretized_env_id(env)
+
+    if env_id in registry and not force:
+        return env_id
+    if force and env_id in registry:
+        del registry[env_id]
+
+    register(
+        id=env_id,
+        entry_point=DiscretizedObservationEnv,
+        kwargs={
+            "env": env_source,
+            "discretization": discretization,
+            "env_kwargs": resolved_env_kwargs,
+        },
+        **registration_kwargs,
+    )
+    return env_id
+
+
+def _registration_env_source(
+    env: gym.Env | str,
+    env_kwargs: dict | None = None,
+) -> tuple[gym.Env | str, dict | None]:
+    if isinstance(env, str):
+        return env, dict(env_kwargs or {})
+
+    spec = getattr(env, "spec", None)
+    if spec is None or spec.id is None:
+        return env, dict(env_kwargs or {}) if env_kwargs is not None else None
+
+    kwargs = dict(getattr(spec, "kwargs", {}) or {})
+    if spec.max_episode_steps is not None:
+        kwargs.setdefault("max_episode_steps", spec.max_episode_steps)
+    if env_kwargs is not None:
+        kwargs.update(env_kwargs)
+    return spec.id, kwargs
+
+
+def _default_discretized_env_id(env: gym.Env | str) -> str:
+    if isinstance(env, str):
+        base_id = env
+    else:
+        spec = getattr(env, "spec", None)
+        base_id = spec.id if spec is not None and spec.id is not None else None
+
+    if base_id is None:
+        base_name = env.unwrapped.__class__.__name__
+    else:
+        base_name = base_id.split("/")[-1]
+        version_prefix, _, version = base_name.rpartition("-v")
+        if version_prefix and version.isdigit():
+            base_name = version_prefix
+    return f"rl_suite/Discretized{base_name}-v0"
+
+
 class HumanEnvironmentRunner:
     """Gymnasium adapter that prompts a human for an action at every step."""
 
@@ -369,6 +485,7 @@ def print_discrete_space(list_of_spaces) -> None:
 
 __all__ = [
     "DEFAULT_DISCRETIZATION",
+    "DiscretizedObservationEnv",
     "HumanEnvironmentRunner",
     "RLEnvironmentRunner",
     "discretize_interval",
@@ -376,4 +493,5 @@ __all__ = [
     "get_spaces_from_env",
     "neat_int",
     "print_discrete_space",
+    "register_discretized_env",
 ]
