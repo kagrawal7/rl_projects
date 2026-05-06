@@ -1,7 +1,7 @@
-from .td_base import TDAgent
+from ._td_base import _TDAgent
 import numpy as np
 
-class QLearningAgent(TDAgent):
+class _QLearning(_TDAgent):
     """Off-policy Q-learning."""
 
     def update_rule(self, state, action, reward, next_state, next_action):

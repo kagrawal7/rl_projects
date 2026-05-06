@@ -6,7 +6,7 @@ import numpy as np
 from rl_suite.utils.environment import RLEnvironmentRunner
 
 
-class TDAgent:
+class _TDAgent:
     """Base tabular TD control agent over a discretized environment runner."""
 
     def __init__(
@@ -128,4 +128,4 @@ class TDAgent:
 
 
 
-__all__ = ["ExpectedSarsaAgent", "QLearningAgent", "SarsaAgent", "TDAgent"]
+__all__ = ["ExpectedSarsaAgent", "QLearningAgent", "SarsaAgent", "_TDAgent"]

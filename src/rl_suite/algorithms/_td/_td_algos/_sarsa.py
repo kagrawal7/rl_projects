@@ -1,7 +1,7 @@
-from .td_base import TDAgent
+from ._td_base import _TDAgent
 import numpy as np
 
-class SarsaAgent(TDAgent):
+class _Sarsa(_TDAgent):
     """On-policy SARSA."""
 
     def update_rule(self, state, action, reward, next_state, next_action):

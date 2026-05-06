@@ -1,6 +1,6 @@
 from .gpi.gpi_agent import _GPIAgent
 from .mc.mc_agent import _MCAgent
-from .td.td_agent import _TDAgent
+from ._td.td_agent import _TDAgent
 
 
 class Algorithms:
