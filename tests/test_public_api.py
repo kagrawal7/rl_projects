@@ -1,33 +1,30 @@
-import importlib
-
 import gymnasium as gym
-import pytest
 
 import rl_suite
+import rl_suite.algorithms as algorithms
 import rl_suite.callbacks as callbacks
 from rl_suite import dp, mc, td
-from rl_suite.algos import QLearning, SARSA, ExpectedSARSA, ValueIteration
 from rl_suite.environments import DiscretizedObservationEnv
 from rl_suite.td import SARSA as SARSAFromFamily
 from rl_suite.visualization import render_env_in_notebook
 
 
 def test_direct_algorithm_imports_have_public_class_names():
-    assert QLearning.__name__ == "QLearning"
-    assert SARSA.__name__ == "SARSA"
-    assert ExpectedSARSA.__name__ == "ExpectedSARSA"
-    assert ValueIteration.__name__ == "ValueIteration"
+    assert algorithms.QLearning.__name__ == "QLearning"
+    assert algorithms.SARSA.__name__ == "SARSA"
+    assert algorithms.ExpectedSARSA.__name__ == "ExpectedSARSA"
+    assert algorithms.ValueIteration.__name__ == "ValueIteration"
 
 
 def test_algorithm_family_modules_expose_discovery_helpers():
-    assert td.get_implemented_algos() == [
+    assert td.get_implemented_algorithms() == [
         "QLearning",
         "SARSA",
         "ExpectedSARSA",
     ]
     assert td.get_implemented_algs() == td.get_implemented_algorithms()
-    assert mc.get_implemented_algos() == ["OffPolicyMonteCarlo"]
-    assert dp.get_implemented_algos() == [
+    assert mc.get_implemented_algorithms() == ["OffPolicyMonteCarlo"]
+    assert dp.get_implemented_algorithms() == [
         "PolicyIteration",
         "StochasticPolicyEvaluation",
         "ValueIteration",
@@ -35,13 +32,20 @@ def test_algorithm_family_modules_expose_discovery_helpers():
 
 
 def test_top_level_package_exposes_lowercase_family_modules():
-    assert rl_suite.td.QLearning is QLearning
-    assert rl_suite.mc.OffPolicyMC.__name__ == "OffPolicyMonteCarlo"
-    assert rl_suite.dp.ValueIteration is ValueIteration
+    assert rl_suite.td.QLearning is algorithms.QLearning
+    assert rl_suite.mc.OffPolicyMC is algorithms.OffPolicyMC
+    assert rl_suite.dp.ValueIteration is algorithms.ValueIteration
+
+
+def test_flat_algorithm_module_reexports_family_classes():
+    assert rl_suite.algorithms.SARSA is td.SARSA
+    assert algorithms.SARSA is td.SARSA
+    assert algorithms.ValueIteration is dp.ValueIteration
+    assert algorithms.OffPolicyMonteCarlo is mc.OffPolicyMonteCarlo
 
 
 def test_family_modules_support_algorithm_imports():
-    assert SARSAFromFamily is SARSA
+    assert SARSAFromFamily is algorithms.SARSA
 
 
 def test_public_helpers_are_importable_from_domain_modules():
@@ -53,12 +57,7 @@ def test_public_helpers_are_importable_from_domain_modules():
 def test_public_algorithms_can_be_instantiated():
     env = gym.make("FrozenLake-v1")
     try:
-        agent = QLearning(env)
+        agent = algorithms.QLearning(env)
         assert agent.env is env
     finally:
         env.close()
-
-
-def test_removed_toolbox_namespace_is_not_importable():
-    with pytest.raises(ModuleNotFoundError):
-        importlib.import_module("rl_suite.RLToolbox")

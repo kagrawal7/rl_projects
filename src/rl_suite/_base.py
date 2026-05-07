@@ -1,13 +1,118 @@
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
+
 import gymnasium as gym
 import numpy as np
 
-from ._agent_base import AbstractAgent
 from rl_suite._utilities.environment import get_discrete_state, get_state_shape
 
 
-class _TDBaseAgent(AbstractAgent):
+class Agent(ABC):
+    """Base class for agents that interact with a Gymnasium environment."""
+
+    def __init__(self, env):
+        super().__init__()
+        self.env = env
+
+    def get_env_info(self, env):
+        if hasattr(env, "get_spaces"):
+            states, actions, num_states, num_actions = env.get_spaces()
+        else:
+            num_states = env.observation_space.n
+            num_actions = env.action_space.n
+            states = list(range(num_states))
+            actions = list(range(num_actions))
+        self.S_plus = states
+        self.A = actions
+        self.n = num_states
+        self.k = num_actions
+
+    @abstractmethod
+    def select_action(self, state):
+        pass
+
+
+class DynamicProgrammingAgent(Agent):
+    """Base class for finite-MDP dynamic-programming algorithms."""
+
+    def __init__(self, env, gamma, theta):
+        super().__init__(env)
+        self.gamma = gamma
+        self.theta = theta
+        self.no_policy_set = True
+
+    def _expected_return(self, action_vector):
+        """Return expected value for one transition tuple."""
+        s_prime, reward = action_vector[1:3]
+        return reward + self.gamma * self.V[s_prime]
+
+    def _action_argmax(self, state):
+        """Return the action that maximizes expected return."""
+        transitions = self.p[state]
+        return max(
+            transitions,
+            key=lambda action: self._expected_return(transitions[action][0]),
+        )
+
+    def get_env_info(self, env):
+        super().get_env_info(env)
+        self.p = env.unwrapped.P
+        self.V = []
+        self.terminals = set()
+        for state in range(self.n):
+            for action_key in self.p[state]:
+                transition = self.p[state][action_key][0]
+                if transition[-1]:
+                    self.V.append(0)
+                    self.terminals.add(transition[1])
+                else:
+                    self.V.append(1)
+        if self.no_policy_set:
+            self._initialize_policy()
+
+    def policy_evaluation(self, print_num_iter=False, callbacks=None):
+        """Evaluate the current policy with iterative policy evaluation."""
+        if self.theta <= 0:
+            raise ValueError("Theta must be positive number!")
+        num_iter = 0
+        while True:
+            delta = 0
+            num_iter += 1
+            for state in range(self.n):
+                if state in self.terminals:
+                    continue
+                old_value = self.V[state]
+                self.V[state] = self._value_update(state)
+                delta = max(delta, abs(old_value - self.V[state]))
+            if callbacks is not None:
+                callbacks.on_update({
+                    "phase": "policy_evaluation",
+                    "sweep": num_iter,
+                    "delta": delta,
+                    "values": self.V,
+                    "policy": self.policy,
+                })
+            if delta < self.theta:
+                break
+        self.last_evaluation_sweeps = num_iter
+        if print_num_iter:
+            print(
+                f"theta={self.theta} and gamma={self.gamma} ====> "
+                f"number of steps in evalution: {num_iter}"
+            )
+        return self.policy, self.V
+
+    @abstractmethod
+    def _initialize_policy(self):
+        pass
+
+    @abstractmethod
+    def _value_update(self, state):
+        pass
+
+
+class TemporalDifferenceAgent(Agent):
     """Base tabular TD control agent over a discrete Gymnasium environment."""
 
     def __init__(
@@ -57,7 +162,11 @@ class _TDBaseAgent(AbstractAgent):
                 next_action = self.select_action(next_state, behavior=True)
 
                 update = self.update_rule(
-                    state, action, reward, next_state, next_action
+                    state,
+                    action,
+                    reward,
+                    next_state,
+                    next_action,
                 )
                 self.Q[state][action] += self.alpha * update
 
@@ -101,13 +210,10 @@ class _TDBaseAgent(AbstractAgent):
         return int(np.argmax(self.Q[state]))
 
     def _initialize_values(self, env: gym.Env) -> None:
-        state_shape = self._state_shape(env)
+        state_shape = get_state_shape(env.observation_space)
         self._num_actions = env.action_space.n
         self.Q = np.random.random_sample((*state_shape, self._num_actions))
         self._set_terminal_states_to_zero()
-
-    def _state_shape(self, env: gym.Env) -> tuple[int, ...]:
-        return get_state_shape(env.observation_space)
 
     def _set_terminal_states_to_zero(self) -> None:
         state_dimensions = self.Q.shape[:-1]
@@ -122,5 +228,4 @@ class _TDBaseAgent(AbstractAgent):
         return probabilities
 
 
-
-__all__ = ["_TDBaseAgent"]
+__all__ = ["Agent", "DynamicProgrammingAgent", "TemporalDifferenceAgent"]

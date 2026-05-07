@@ -18,7 +18,7 @@ notebooks into a package.
 |   `-- cartpole_td.ipynb
 |-- src/
 |   `-- rl_suite/
-|       |-- algos/
+|       |-- algorithms.py
 |       |-- callbacks/
 |       |-- environments/
 |       |-- experiments/
@@ -27,8 +27,8 @@ notebooks into a package.
 |       |-- dp.py
 |       |-- mc.py
 |       |-- td.py
-|       |-- _utilities/
-|       `-- _algorithms/
+|       |-- _base.py
+|       `-- _utilities/
 |-- requirements.txt
 `-- pyproject.toml
 ```
@@ -72,7 +72,7 @@ run_episode(env, render_fn=render_env_in_notebook, render_each_step=True)
 Algorithms can be imported directly:
 
 ```python
-from rl_suite.algos import QLearning, SARSA, ExpectedSARSA, ValueIteration
+from rl_suite.algorithms import QLearning, SARSA, ExpectedSARSA, ValueIteration
 
 q_learning_agent = QLearning(env)
 sarsa_agent = SARSA(env)
@@ -84,7 +84,7 @@ Algorithm families are also available as discoverable modules:
 ```python
 from rl_suite import td
 
-print(td.get_implemented_algos())
+print(td.get_implemented_algorithms())
 # ['QLearning', 'SARSA', 'ExpectedSARSA']
 
 agent = td.QLearning(env)
@@ -116,9 +116,10 @@ jupyter lab
 
 ## Development Notes
 
-- Public algorithm classes live under `src/rl_suite/algos`.
+- Public algorithm classes live in `src/rl_suite/algorithms.py` and the family
+  modules `src/rl_suite/td.py`, `src/rl_suite/mc.py`, and `src/rl_suite/dp.py`.
 - Public callback hooks live under `src/rl_suite/callbacks`.
 - Public environment helpers live under `src/rl_suite/environments`.
 - Public experiment helpers live under `src/rl_suite/experiments`.
-- Internal implementation code remains under `src/rl_suite/_algorithms` and
-  `src/rl_suite/_utilities`.
+- Shared base classes live in `src/rl_suite/_base.py`; utility implementation
+  details remain under `src/rl_suite/_utilities`.
