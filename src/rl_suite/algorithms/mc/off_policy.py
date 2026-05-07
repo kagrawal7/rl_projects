@@ -5,7 +5,7 @@ from collections.abc import Callable
 import gymnasium as gym
 import numpy as np
 
-from rl_suite._algorithms._base._agent_base import AbstractAgent
+from rl_suite.algorithms.base.agent import AbstractAgent
 from rl_suite._utilities.environment import get_discrete_state, get_state_shape
 
 

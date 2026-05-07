@@ -1,4 +1,4 @@
-from rl_suite._algorithms._base._td_base import _TDBaseAgent
+from rl_suite.algorithms.base.temporal_difference import _TDBaseAgent
 import numpy as np
 
 class _QLearning(_TDBaseAgent):

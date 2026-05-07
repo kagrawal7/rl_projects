@@ -18,16 +18,12 @@ notebooks into a package.
 |   `-- cartpole_td.ipynb
 |-- src/
 |   `-- rl_suite/
-|       |-- algorithms.py
 |       |-- callbacks/
 |       |-- environments/
 |       |-- experiments/
 |       |-- visualization/
 |       |-- utils/
-|       |-- dp.py
-|       |-- mc.py
-|       |-- td.py
-|       |-- _algorithms/
+|       |-- algorithms/
 |       `-- _utilities/
 |-- requirements.txt
 `-- pyproject.toml
@@ -116,10 +112,10 @@ jupyter lab
 
 ## Development Notes
 
-- Public algorithm classes live in `src/rl_suite/algorithms.py` and the family
-  modules `src/rl_suite/td.py`, `src/rl_suite/mc.py`, and `src/rl_suite/dp.py`.
+- Public algorithm classes live under `src/rl_suite/algorithms`.
+- The family aliases `rl_suite.td`, `rl_suite.mc`, and `rl_suite.dp` point to
+  the matching subpackages under `rl_suite.algorithms`.
 - Public callback hooks live under `src/rl_suite/callbacks`.
 - Public environment helpers live under `src/rl_suite/environments`.
 - Public experiment helpers live under `src/rl_suite/experiments`.
-- Internal algorithm implementations live under `src/rl_suite/_algorithms`.
 - Utility implementation details remain under `src/rl_suite/_utilities`.

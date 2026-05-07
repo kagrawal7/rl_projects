@@ -1,9 +1,9 @@
 """Dynamic-programming algorithms."""
 
-from rl_suite._algorithms._base._gpi_base import _GPIBaseAgent
-from rl_suite._algorithms._gpi._gpi_algos._deterministic_gpi import _Deterministic
-from rl_suite._algorithms._gpi._gpi_algos._stochastic_gpi import _Stochastic
-from rl_suite._algorithms._gpi._gpi_algos._value_iteration import _ValueIteration
+from rl_suite.algorithms.base.dynamic_programming import _GPIBaseAgent
+from rl_suite.algorithms.dp.policy_iteration import _Deterministic
+from rl_suite.algorithms.dp.stochastic_policy_evaluation import _Stochastic
+from rl_suite.algorithms.dp.value_iteration import _ValueIteration
 from rl_suite._discovery import class_names, discover_algorithm_classes
 
 

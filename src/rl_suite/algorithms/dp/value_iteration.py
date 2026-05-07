@@ -1,4 +1,4 @@
-from ._stochastic_gpi import _Stochastic
+from .stochastic_policy_evaluation import _Stochastic
 
 class _ValueIteration(_Stochastic):
     """Stochastic policy init + value iteration for an optimal deterministic policy."""

@@ -1,6 +1,6 @@
 """Flat access to all implemented reinforcement-learning algorithms."""
 
-from rl_suite import dp, mc, td
+from rl_suite.algorithms import dp, mc, td
 from rl_suite._discovery import class_names
 
 

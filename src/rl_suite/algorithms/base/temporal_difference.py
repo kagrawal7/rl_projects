@@ -3,7 +3,7 @@ from __future__ import annotations
 import gymnasium as gym
 import numpy as np
 
-from ._agent_base import AbstractAgent
+from .agent import AbstractAgent
 from rl_suite._utilities.environment import get_discrete_state, get_state_shape
 
 

@@ -1,6 +1,6 @@
 """Monte Carlo control algorithms."""
 
-from rl_suite._algorithms._mc._off_policy._off_policy_control import _OffPolicyAgent
+from rl_suite.algorithms.mc.off_policy import _OffPolicyAgent
 from rl_suite._discovery import class_names, discover_algorithm_classes
 
 
