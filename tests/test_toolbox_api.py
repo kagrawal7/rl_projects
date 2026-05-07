@@ -28,20 +28,18 @@ def test_toolbox_utilities_module_exposes_helpers():
     assert callable(utils.register_discretized_env)
 
 
-def test_algorithms_and_utilities_are_not_public_package_modules():
+def test_legacy_algorithm_and_utility_aliases_are_not_public_package_modules():
     import rl_suite
 
     assert not hasattr(rl_suite, "algorithms")
     assert not hasattr(rl_suite, "utilities")
+    assert hasattr(rl_suite, "utils")
 
     with pytest.raises(ModuleNotFoundError):
         importlib.import_module("rl_suite.algorithms")
 
     with pytest.raises(ModuleNotFoundError):
         importlib.import_module("rl_suite.utilities")
-
-    with pytest.raises(ModuleNotFoundError):
-        importlib.import_module("rl_suite.utils")
 
     with pytest.raises(ModuleNotFoundError):
         importlib.import_module("rl_suite.RLToolbox.utils")

@@ -18,7 +18,15 @@ notebooks into a package.
 |   `-- cartpole_td.ipynb
 |-- src/
 |   `-- rl_suite/
-|       |-- RLToolbox/
+|       |-- RLToolbox/          # legacy namespace
+|       |-- algos/
+|       |-- environments/
+|       |-- experiments/
+|       |-- visualization/
+|       |-- utils/
+|       |-- dp.py
+|       |-- mc.py
+|       |-- td.py
 |       |-- _utilities/
 |       `-- _algorithms/
 |-- requirements.txt
@@ -48,27 +56,38 @@ pip install -e ".[notebooks]"
 
 ## Usage
 
-The main public entry point is `rl_suite.RLToolbox`.
+The public API is organized around algorithms, environments, experiments, and
+visualization helpers.
 
 ```python
 import gymnasium as gym
-import rl_suite.RLToolbox.utilities as utils
+from rl_suite.environments import run_episode
+from rl_suite.visualization import render_env_in_notebook
 
 env = gym.make("FrozenLake-v1", render_mode="rgb_array")
 
-render_fn = utils.render_env_in_notebook
-
-utils.run_episode(env, render_fn=render_fn, render_each_step=True)
+run_episode(env, render_fn=render_env_in_notebook, render_each_step=True)
 ```
 
-Algorithms are accessed through the same toolbox facade:
+Algorithms can be imported directly:
 
 ```python
-import rl_suite.RLToolbox.algorithms as rl
+from rl_suite.algos import QLearning, SARSA, ExpectedSARSA, ValueIteration
 
-sarsa_agent = rl.td.sarsa(env)
-q_learning_agent = rl.td.q_learning(env)
-mc_agent = rl.mc.off_policy(env)
+q_learning_agent = QLearning(env)
+sarsa_agent = SARSA(env)
+value_iteration_agent = ValueIteration(env)
+```
+
+Algorithm families are also available as discoverable modules:
+
+```python
+from rl_suite import td
+
+print(td.get_implemented_algos())
+# ['QLearning', 'SARSA', 'ExpectedSARSA']
+
+agent = td.QLearning(env)
 ```
 
 ## Notebooks
@@ -91,7 +110,10 @@ jupyter lab
 
 ## Development Notes
 
-- Utility code lives in `src/rl_suite/_utilities`.
-- Algorithm implementations live in `src/rl_suite/_algorithms`.
-- The notebooks should use `rl_suite.RLToolbox` as the public interface rather
-  than duplicating algorithm or environment execution code.
+- Public algorithm classes live under `src/rl_suite/algos`.
+- Public environment helpers live under `src/rl_suite/environments`.
+- Public experiment helpers live under `src/rl_suite/experiments`.
+- Internal implementation code remains under `src/rl_suite/_algorithms` and
+  `src/rl_suite/_utilities`.
+- The legacy `rl_suite.RLToolbox` namespace remains available for older
+  notebooks, but new code should prefer the public domain modules above.

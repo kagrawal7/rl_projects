@@ -1,6 +1,25 @@
-"""rl_suite package.
+"""Reusable reinforcement-learning algorithms and experiment helpers."""
 
-The public API is intentionally limited to the ``rl_suite.RLToolbox`` package.
-"""
+from importlib import import_module
 
-__all__: list[str] = []
+
+_PUBLIC_SUBMODULES = frozenset({
+    "algos",
+    "dp",
+    "environments",
+    "experiments",
+    "mc",
+    "td",
+    "utils",
+    "visualization",
+})
+
+__all__ = sorted(_PUBLIC_SUBMODULES)
+
+
+def __getattr__(name: str):
+    if name in _PUBLIC_SUBMODULES:
+        module = import_module(f"{__name__}.{name}")
+        globals()[name] = module
+        return module
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
