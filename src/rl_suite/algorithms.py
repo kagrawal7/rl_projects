@@ -1,38 +1,36 @@
 """Flat access to all implemented reinforcement-learning algorithms."""
 
-from rl_suite.dp import PolicyIteration, StochasticPolicyEvaluation, ValueIteration
-from rl_suite.mc import OffPolicyMC, OffPolicyMonteCarlo
-from rl_suite.td import ExpectedSARSA, QLearning, SARSA
+from rl_suite import dp, mc, td
+from rl_suite._discovery import class_names
 
 
-IMPLEMENTED_ALGORITHMS = (
-    PolicyIteration,
-    StochasticPolicyEvaluation,
-    ValueIteration,
-    OffPolicyMonteCarlo,
-    QLearning,
-    SARSA,
-    ExpectedSARSA,
-)
+_FAMILY_MODULES = (dp, mc, td)
+
+
+def _algorithm_classes() -> list[type]:
+    classes = []
+    for module in _FAMILY_MODULES:
+        classes.extend(module._algorithm_classes())
+    return classes
+
+
+for _algorithm in _algorithm_classes():
+    globals()[_algorithm.__name__] = _algorithm
+
+OffPolicyMC = mc.OffPolicyMC
 
 
 def get_implemented_algorithms() -> list[str]:
     """Return all public algorithm classes exposed by rl_suite."""
-    return [algorithm.__name__ for algorithm in IMPLEMENTED_ALGORITHMS]
+    return class_names(_algorithm_classes())
 
 
 get_implemented_algs = get_implemented_algorithms
 
 
 __all__ = [
-    "ExpectedSARSA",
+    *get_implemented_algorithms(),
     "OffPolicyMC",
-    "OffPolicyMonteCarlo",
-    "PolicyIteration",
-    "QLearning",
-    "SARSA",
-    "StochasticPolicyEvaluation",
-    "ValueIteration",
     "get_implemented_algs",
     "get_implemented_algorithms",
 ]

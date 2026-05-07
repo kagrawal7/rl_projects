@@ -29,6 +29,15 @@ def test_algorithm_family_modules_expose_discovery_helpers():
         "StochasticPolicyEvaluation",
         "ValueIteration",
     ]
+    assert algorithms.get_implemented_algorithms() == [
+        "PolicyIteration",
+        "StochasticPolicyEvaluation",
+        "ValueIteration",
+        "OffPolicyMonteCarlo",
+        "QLearning",
+        "SARSA",
+        "ExpectedSARSA",
+    ]
 
 
 def test_top_level_package_exposes_lowercase_family_modules():

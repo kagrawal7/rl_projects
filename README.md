@@ -27,7 +27,7 @@ notebooks into a package.
 |       |-- dp.py
 |       |-- mc.py
 |       |-- td.py
-|       |-- _base.py
+|       |-- _algorithms/
 |       `-- _utilities/
 |-- requirements.txt
 `-- pyproject.toml
@@ -121,5 +121,5 @@ jupyter lab
 - Public callback hooks live under `src/rl_suite/callbacks`.
 - Public environment helpers live under `src/rl_suite/environments`.
 - Public experiment helpers live under `src/rl_suite/experiments`.
-- Shared base classes live in `src/rl_suite/_base.py`; utility implementation
-  details remain under `src/rl_suite/_utilities`.
+- Internal algorithm implementations live under `src/rl_suite/_algorithms`.
+- Utility implementation details remain under `src/rl_suite/_utilities`.
