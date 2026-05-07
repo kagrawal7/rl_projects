@@ -18,8 +18,8 @@ notebooks into a package.
 |   `-- cartpole_td.ipynb
 |-- src/
 |   `-- rl_suite/
-|       |-- RLToolbox.py
-|       |-- _utils/
+|       |-- RLToolbox/
+|       |-- _utilities/
 |       `-- _algorithms/
 |-- requirements.txt
 `-- pyproject.toml
@@ -52,11 +52,10 @@ The main public entry point is `rl_suite.RLToolbox`.
 
 ```python
 import gymnasium as gym
-import rl_suite.RLToolbox as rl_var
+import rl_suite.RLToolbox.utilities as utils
 
 env = gym.make("FrozenLake-v1", render_mode="rgb_array")
 
-utils = rl_var.utils
 render_fn = utils.render_env_in_notebook
 
 utils.run_episode(env, render_fn=render_fn, render_each_step=True)
@@ -65,7 +64,7 @@ utils.run_episode(env, render_fn=render_fn, render_each_step=True)
 Algorithms are accessed through the same toolbox facade:
 
 ```python
-rl = rl_var.algorithms
+import rl_suite.RLToolbox.algorithms as rl
 
 sarsa_agent = rl.td.sarsa(env)
 q_learning_agent = rl.td.q_learning(env)
@@ -92,7 +91,7 @@ jupyter lab
 
 ## Development Notes
 
-- Utility code lives in `src/rl_suite/_utils`.
+- Utility code lives in `src/rl_suite/_utilities`.
 - Algorithm implementations live in `src/rl_suite/_algorithms`.
 - The notebooks should use `rl_suite.RLToolbox` as the public interface rather
   than duplicating algorithm or environment execution code.
