@@ -117,7 +117,30 @@ class FrozenLakeDP:
         }
 
 
-def run_episode(policy, reward="sparse", seed=0, max_steps=100):
+def run_experiments(gammas=(0.9, 0.99), rewards=("sparse", "dense"), episodes=100):
+    experiments = []
+    for algorithm in ("policy_iteration", "value_iteration"):
+        theta = 1e-3 if algorithm == "policy_iteration" else 1e-6
+        for reward in rewards:
+            for gamma in gammas:
+                solver = FrozenLakeDP(make_env(reward), gamma=gamma, theta=theta)
+                result = getattr(solver, algorithm)()
+                successes, path = 0, []
+                for i in range(episodes):
+                    reached_goal, path = play(result["policy"], reward, seed=10 + i)
+                    successes += reached_goal
+                result.update({
+                    "reward": reward,
+                    "gamma": gamma,
+                    "theta": theta,
+                    "success_rate": successes / episodes,
+                    "latest_path": path,
+                })
+                experiments.append(result)
+    return experiments
+
+
+def play(policy, reward="sparse", seed=0, max_steps=100):
     env = make_env(reward)
     state, _ = env.reset(seed=seed)
     path = [int(state)]
@@ -131,39 +154,10 @@ def run_episode(policy, reward="sparse", seed=0, max_steps=100):
     return path[-1] == 15, path
 
 
-def success_rate(policy, reward="sparse", episodes=100, seed=10):
-    successes = 0
-    path = []
-    for i in range(episodes):
-        reached_goal, path = run_episode(policy, reward, seed + i)
-        successes += reached_goal
-    return successes / episodes, path
-
-
-def run_experiments(gammas=(0.9, 0.99), rewards=("sparse", "dense"), episodes=100):
-    experiments = []
-    for algorithm in ("policy_iteration", "value_iteration"):
-        theta = 1e-3 if algorithm == "policy_iteration" else 1e-6
-        for reward in rewards:
-            for gamma in gammas:
-                solver = FrozenLakeDP(make_env(reward), gamma=gamma, theta=theta)
-                result = getattr(solver, algorithm)()
-                rate, path = success_rate(result["policy"], reward, episodes)
-                result.update({
-                    "reward": reward,
-                    "gamma": gamma,
-                    "theta": theta,
-                    "success_rate": rate,
-                    "latest_path": path,
-                })
-                experiments.append(result)
-    return experiments
-
-
 def plot_summary(experiments):
     import matplotlib.pyplot as plt
 
-    labels = [label(exp) for exp in experiments]
+    labels = [f"{e['algorithm'][:2]}, {e['reward']}, g={e['gamma']}" for e in experiments]
     fig, axes = plt.subplots(1, 3, figsize=(16, 4))
     plots = [
         ("Runtime", [exp["runtime"] * 1000 for exp in experiments], "Milliseconds"),
@@ -184,19 +178,16 @@ def plot_values(experiments):
     states = np.arange(16)
     fig, axes = plt.subplots(len(experiments), 2, figsize=(10, 3 * len(experiments)))
     for ax_row, exp in zip(np.atleast_2d(axes), experiments):
+        title = f"{exp['algorithm'][:2]}, {exp['reward']}, g={exp['gamma']}"
         ax_row[0].plot(states, exp["values"], marker="o")
-        ax_row[0].set(title=label(exp), xlabel="State", ylabel="V(s)")
+        ax_row[0].set(title=title, xlabel="State", ylabel="V(s)")
         ax_row[0].grid(alpha=0.35)
 
         heatmap = ax_row[1].imshow(exp["values"].reshape(4, 4), cmap="viridis")
-        ax_row[1].set(title=f"{label(exp)} heatmap", xticks=[], yticks=[])
+        ax_row[1].set(title=f"{title} heatmap", xticks=[], yticks=[])
         fig.colorbar(heatmap, ax=ax_row[1], fraction=0.046, pad=0.04)
     fig.tight_layout()
 
 
-def policy_names(policy):
+def named_policy(policy):
     return np.array([ACTIONS[a] for a in policy]).reshape(4, 4)
-
-
-def label(exp):
-    return f"{exp['algorithm'][:2]}, {exp['reward']}, gamma={exp['gamma']}"

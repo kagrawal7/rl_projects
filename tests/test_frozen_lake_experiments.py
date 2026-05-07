@@ -22,11 +22,7 @@ def test_action_value_sums_all_slippery_transitions():
 
 
 def test_frozen_lake_experiment_grid_runs():
-    experiments = run_experiments(
-        rewards=("sparse",),
-        gammas=(0.9,),
-        episodes=2,
-    )
+    experiments = run_experiments(rewards=("sparse",), gammas=(0.9,), episodes=2)
 
     assert [exp["algorithm"] for exp in experiments] == [
         "Policy Iteration",
