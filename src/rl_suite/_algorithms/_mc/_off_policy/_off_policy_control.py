@@ -6,7 +6,7 @@ import gymnasium as gym
 import numpy as np
 
 from rl_suite._algorithms._base._agent_base import AbstractAgent
-from rl_suite.utils.environment import get_discrete_state, get_state_shape
+from rl_suite._utils.environment import get_discrete_state, get_state_shape
 
 
 class _OffPolicyAgent(AbstractAgent):
