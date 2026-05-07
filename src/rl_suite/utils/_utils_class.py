@@ -3,6 +3,7 @@ from __future__ import annotations
 from . import environment, rendering
 from .environment import (
     DEFAULT_DISCRETIZATION,
+    DiscretizedObservationEnv,
     HumanEnvironmentRunner,
     RLEnvironmentRunner,
     discretize_interval,
@@ -10,6 +11,7 @@ from .environment import (
     get_spaces_from_env,
     neat_int,
     print_discrete_space,
+    register_discretized_env,
 )
 from .rendering import display_renders, render_env_in_notebook
 
@@ -21,6 +23,7 @@ class _Utilities:
     rendering = rendering
 
     DEFAULT_DISCRETIZATION = DEFAULT_DISCRETIZATION
+    DiscretizedObservationEnv = DiscretizedObservationEnv
     HumanEnvironmentRunner = HumanEnvironmentRunner
     RLEnvironmentRunner = RLEnvironmentRunner
 
@@ -29,6 +32,7 @@ class _Utilities:
     get_spaces_from_env = staticmethod(get_spaces_from_env)
     neat_int = staticmethod(neat_int)
     print_discrete_space = staticmethod(print_discrete_space)
+    register_discretized_env = staticmethod(register_discretized_env)
 
     display_renders = staticmethod(display_renders)
     render_env_in_notebook = staticmethod(render_env_in_notebook)
