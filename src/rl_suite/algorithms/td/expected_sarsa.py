@@ -1,8 +1,10 @@
-from rl_suite.algorithms.base.temporal_difference import _TDBaseAgent
 import numpy as np
 
-class _ExpectedSarsa(_TDBaseAgent):
-    """Expected SARSA with a possibly more exploratory behaviour policy."""
+from rl_suite.algorithms._base.temporal_difference import _TDBaseAgent
+
+
+class ExpectedSARSA(_TDBaseAgent):
+    """Tabular Expected SARSA control."""
 
     def __init__(self, env, **kwargs):
         if "behavior_epsilon" not in kwargs:

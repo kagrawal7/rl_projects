@@ -1,22 +1,10 @@
 """Temporal-difference control algorithms."""
 
-from rl_suite.algorithms.base.temporal_difference import _TDBaseAgent
-from rl_suite.algorithms.td.expected_sarsa import _ExpectedSarsa
-from rl_suite.algorithms.td.q_learning import _QLearning
-from rl_suite.algorithms.td.sarsa import _Sarsa
+from rl_suite.algorithms._base.temporal_difference import _TDBaseAgent
+from rl_suite.algorithms.td.q_learning import QLearning as QLearning
+from rl_suite.algorithms.td.sarsa import SARSA as SARSA
+from rl_suite.algorithms.td.expected_sarsa import ExpectedSARSA as ExpectedSARSA
 from rl_suite._discovery import class_names, discover_algorithm_classes
-
-
-class QLearning(_QLearning):
-    """Tabular off-policy Q-learning control."""
-
-
-class SARSA(_Sarsa):
-    """Tabular on-policy SARSA control."""
-
-
-class ExpectedSARSA(_ExpectedSarsa):
-    """Tabular Expected SARSA control."""
 
 
 def _algorithm_classes() -> list[type]:

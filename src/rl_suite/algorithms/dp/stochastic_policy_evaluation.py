@@ -1,8 +1,10 @@
-from rl_suite.algorithms.base.dynamic_programming import _GPIBaseAgent
 import numpy as np
 
-class _Stochastic(_GPIBaseAgent):
-    """Agent that uses a stochastic policy function."""
+from rl_suite.algorithms._base.dynamic_programming import _GPIBaseAgent
+
+
+class StochasticPolicyEvaluation(_GPIBaseAgent):
+    """Policy evaluation with a stochastic policy table."""
 
     def __init__(self, env, gamma=0.9, theta=0.02):
         super().__init__(env, gamma, theta)

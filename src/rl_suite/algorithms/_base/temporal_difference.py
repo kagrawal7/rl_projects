@@ -3,11 +3,11 @@ from __future__ import annotations
 import gymnasium as gym
 import numpy as np
 
-from .agent import AbstractAgent
+from .agent import _Agent
 from rl_suite._utilities.environment import get_discrete_state, get_state_shape
 
 
-class _TDBaseAgent(AbstractAgent):
+class _TDBaseAgent(_Agent):
     """Base tabular TD control agent over a discrete Gymnasium environment."""
 
     def __init__(
@@ -120,7 +120,3 @@ class _TDBaseAgent(AbstractAgent):
         probabilities = np.full(self._num_actions, epsilon / self._num_actions)
         probabilities[self.get_greedy_action(state)] += 1 - epsilon
         return probabilities
-
-
-
-__all__ = ["_TDBaseAgent"]

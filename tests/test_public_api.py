@@ -4,6 +4,9 @@ import rl_suite
 import rl_suite.algorithms as algorithms
 import rl_suite.callbacks as callbacks
 from rl_suite import dp, mc, td
+from rl_suite.algorithms.dp.policy_iteration import PolicyIteration
+from rl_suite.algorithms.mc.off_policy import OffPolicyMonteCarlo
+from rl_suite.algorithms.td.q_learning import QLearning
 from rl_suite.environments import DiscretizedObservationEnv
 from rl_suite.td import SARSA as SARSAFromFamily
 from rl_suite.visualization import render_env_in_notebook
@@ -14,6 +17,12 @@ def test_direct_algorithm_imports_have_public_class_names():
     assert algorithms.SARSA.__name__ == "SARSA"
     assert algorithms.ExpectedSARSA.__name__ == "ExpectedSARSA"
     assert algorithms.ValueIteration.__name__ == "ValueIteration"
+
+
+def test_public_algorithm_classes_are_the_implementations():
+    assert algorithms.QLearning is QLearning
+    assert algorithms.PolicyIteration is PolicyIteration
+    assert algorithms.OffPolicyMonteCarlo is OffPolicyMonteCarlo
 
 
 def test_algorithm_family_modules_expose_discovery_helpers():

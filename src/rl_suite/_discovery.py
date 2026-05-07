@@ -13,7 +13,10 @@ def discover_algorithm_classes(module_name: str, base_class: type) -> list[type]
     for name, value in module.__dict__.items():
         if not inspect.isclass(value):
             continue
-        if value.__module__ != module_name:
+        if not (
+            value.__module__ == module_name
+            or value.__module__.startswith(f"{module_name}.")
+        ):
             continue
         if name.startswith("_") or name != value.__name__:
             continue

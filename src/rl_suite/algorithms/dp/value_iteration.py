@@ -1,7 +1,8 @@
-from .stochastic_policy_evaluation import _Stochastic
+from .stochastic_policy_evaluation import StochasticPolicyEvaluation
 
-class _ValueIteration(_Stochastic):
-    """Stochastic policy init + value iteration for an optimal deterministic policy."""
+
+class ValueIteration(StochasticPolicyEvaluation):
+    """Value iteration for finite Markov decision processes."""
 
     def __init__(self, env, gamma=0.9, theta=0.02):
         super().__init__(env, gamma, theta)

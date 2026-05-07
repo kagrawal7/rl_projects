@@ -1,8 +1,10 @@
-from rl_suite.algorithms.base.dynamic_programming import _GPIBaseAgent
 import numpy as np
 
-class _Deterministic(_GPIBaseAgent):
-    """Deterministic policy table with policy iteration."""
+from rl_suite.algorithms._base.dynamic_programming import _GPIBaseAgent
+
+
+class PolicyIteration(_GPIBaseAgent):
+    """Policy iteration with a deterministic policy table."""
 
     def __init__(self, env, gamma=0.9, theta=0.02):
         super().__init__(env, gamma, theta)

@@ -113,6 +113,7 @@ jupyter lab
 ## Development Notes
 
 - Public algorithm classes live under `src/rl_suite/algorithms`.
+- Private algorithm base helpers live under `src/rl_suite/algorithms/_base`.
 - The family aliases `rl_suite.td`, `rl_suite.mc`, and `rl_suite.dp` point to
   the matching subpackages under `rl_suite.algorithms`.
 - Public callback hooks live under `src/rl_suite/callbacks`.

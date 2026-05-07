@@ -1,18 +1,15 @@
 """Monte Carlo control algorithms."""
 
-from rl_suite.algorithms.mc.off_policy import _OffPolicyAgent
+from rl_suite.algorithms._base.agent import _Agent
+from rl_suite.algorithms.mc.off_policy import OffPolicyMonteCarlo
 from rl_suite._discovery import class_names, discover_algorithm_classes
-
-
-class OffPolicyMonteCarlo(_OffPolicyAgent):
-    """Weighted importance-sampling off-policy Monte Carlo control."""
 
 
 OffPolicyMC = OffPolicyMonteCarlo
 
 
 def _algorithm_classes() -> list[type]:
-    return discover_algorithm_classes(__name__, _OffPolicyAgent)
+    return discover_algorithm_classes(__name__, _Agent)
 
 
 def get_implemented_algorithms() -> list[str]:

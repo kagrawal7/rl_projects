@@ -1,8 +1,8 @@
-from rl_suite.algorithms.base.temporal_difference import _TDBaseAgent
+from rl_suite.algorithms._base.temporal_difference import _TDBaseAgent
 
 
-class _Sarsa(_TDBaseAgent):
-    """On-policy SARSA."""
+class SARSA(_TDBaseAgent):
+    """Tabular on-policy SARSA control."""
 
     def update_rule(self, state, action, reward, next_state, next_action):
         return (
