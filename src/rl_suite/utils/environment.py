@@ -34,60 +34,26 @@ DEFAULT_DISCRETIZATION = {
 }
 
 
-class RLEnvironmentRunner:
-    """Gymnasium adapter used by RL agents and tabular algorithms."""
+def _config(discretization: dict | None):
+    return {**DEFAULT_DISCRETIZATION, **(discretization or {})}
+
+
+class ObservationDiscretizer:
+    """Discretize Box observations without owning environment execution."""
 
     def __init__(
         self,
-        env: gym.Env,
+        observation_space: gym.spaces.Box,
         discretization: dict | None = None,
     ):
-        self.env = env
-        self.discretization = self._config(discretization)
+        if not isinstance(observation_space, gym.spaces.Box):
+            raise TypeError("ObservationDiscretizer requires a Box observation space.")
+        self.observation_space = observation_space
+        self.discretization = _config(discretization)
         self.discrete_space: list[np.ndarray] = []
         self.n: int | None = None
         self.n_plus: int | None = None
-        if self.discretization is not None:
-            self.discretize_spaces()
-
-    @classmethod
-    def from_env(
-        cls,
-        env_or_runner: gym.Env | "RLEnvironmentRunner",
-        discretization: dict | None = None,
-    ) -> "RLEnvironmentRunner":
-        if isinstance(env_or_runner, cls):
-            if discretization is not None:
-                env_or_runner.discretization = cls._config(discretization)
-                env_or_runner.discretize_spaces()
-            return env_or_runner
-        return cls(env_or_runner, discretization=discretization)
-
-    def __getattr__(self, name: str):
-        return getattr(self.env, name)
-
-    @property
-    def observation_space(self):
-        return self.env.observation_space
-
-    @property
-    def action_space(self):
-        return self.env.action_space
-
-    @property
-    def unwrapped(self):
-        return self.env.unwrapped
-
-    def get_spaces(self):
-        """Return ``S, A, n, k`` for discrete environments."""
-        if not hasattr(self.observation_space, "n") or not hasattr(
-            self.action_space, "n"
-        ):
-            raise TypeError(
-                "get_spaces requires discrete observation and action spaces"
-            )
-        n, k = self.observation_space.n, self.action_space.n
-        return list(range(n)), list(range(k)), n, k
+        self.discretize_spaces()
 
     def discretize_spaces(
         self,
@@ -97,7 +63,7 @@ class RLEnvironmentRunner:
         include_terminal_bin: bool | None = None,
     ) -> list[np.ndarray]:
         """Build per-feature bin arrays for a Box observation space."""
-        config = self.discretization or DEFAULT_DISCRETIZATION
+        config = self.discretization
         num_bins = config["num_bins"] if num_bins is None else int(num_bins)
         feature_indices = feature_indices or config["feature_indices"]
         intervals = intervals or config["intervals"]
@@ -108,10 +74,6 @@ class RLEnvironmentRunner:
         )
         self.n = even_bin_count(num_bins, min_val=config["min_bins"])
         self.n_plus = self.n + 1 if include_terminal_bin else self.n
-
-        if not isinstance(self.observation_space, gym.spaces.Box):
-            self.discrete_space = []
-            return self.discrete_space
 
         low = np.asarray(self.observation_space.low, dtype=float).reshape(-1)
         high = np.asarray(self.observation_space.high, dtype=float).reshape(-1)
@@ -146,19 +108,9 @@ class RLEnvironmentRunner:
         }
         return self.discrete_space
 
-    def get_discrete(self, state):
-        """Convert an observation into a table-friendly discrete state."""
-        if isinstance(self.observation_space, gym.spaces.Discrete):
-            return int(state)
-        if isinstance(self.observation_space, gym.spaces.MultiDiscrete):
-            return tuple(int(x) for x in np.asarray(state).flat)
-        if not isinstance(self.observation_space, gym.spaces.Box):
-            return state
-
-        if self.discretization is None or not self.discrete_space:
-            self.discretize_spaces()
-
-        values = np.asarray(state, dtype=float).reshape(-1)
+    def discretize(self, observation) -> tuple[int, ...]:
+        """Convert one continuous observation into per-feature bin indices."""
+        values = np.asarray(observation, dtype=float).reshape(-1)
         indices = self.discretization["feature_indices"]
         discrete_state = []
         for position, index in enumerate(indices):
@@ -176,82 +128,29 @@ class RLEnvironmentRunner:
                 discrete_state.append(min(max(bin_index, 0), len(bins) - 1))
         return tuple(discrete_state)
 
-    def run_episode(
-        self,
-        select_action: Callable | None = None,
-        behaviour: Callable | None = None,
-        *,
-        agent=None,
-        seed: int | None = None,
-        close_env: bool = False,
-        discretize_actions: bool = False,
-        render_fn: Callable | None = None,
-        render_each_step: bool = False,
-        store_initial_state: bool = False,
-    ) -> list[tuple]:
-        """
-        Roll out one episode and return transition tuples.
 
-        With no behaviour policy, transitions are ``(state, action, reward)``.
-        With a behaviour policy that returns ``(action, probability)``, transitions
-        are ``(state, action, probability, reward)``.
-        """
-        if select_action is None:
-            select_action = (
-                agent.select_action if agent else lambda _: self.action_space.sample()
-            )
-        if agent is not None and hasattr(agent, "get_env_info"):
-            agent.get_env_info(self)
+def get_discrete_state(observation, observation_space):
+    """Return a table index for a discrete Gymnasium observation."""
+    if isinstance(observation_space, gym.spaces.Discrete):
+        return int(observation)
+    if isinstance(observation_space, gym.spaces.MultiDiscrete):
+        return tuple(int(x) for x in np.asarray(observation).flat)
+    raise TypeError(
+        "Tabular algorithms require a Discrete or MultiDiscrete observation space. "
+        "Use register_discretized_env for continuous Box observations."
+    )
 
-        episode: list[tuple] = []
-        reset_kwargs = {} if seed is None else {"seed": seed}
-        state, _ = self.env.reset(**reset_kwargs)
-        terminated = truncated = False
 
-        while not (terminated or truncated):
-            if render_each_step and render_fn is not None:
-                render_fn(self)
-            elif render_each_step:
-                self.env.render()
-
-            action_state = self.get_discrete(state) if discretize_actions else state
-            if behaviour is None:
-                action_output = select_action(action_state)
-            else:
-                action_output = select_action(action_state, behaviour)
-            action, probability = self._normalize_action_output(action_output)
-
-            next_state, reward, terminated, truncated, _ = self.env.step(action)
-            if store_initial_state:
-                stored_state = action_state if discretize_actions else state
-            else:
-                stored_state = (
-                    self.get_discrete(next_state) if discretize_actions else next_state
-                )
-            if probability is None:
-                episode.append((stored_state, action, reward))
-            else:
-                episode.append((stored_state, action, probability, reward))
-            state = next_state
-
-        if close_env:
-            self.env.close()
-        return episode
-
-    execute_environment = run_episode
-    run = run_episode
-
-    @staticmethod
-    def _normalize_action_output(action_output):
-        if isinstance(action_output, tuple) and len(action_output) == 2:
-            return action_output
-        return action_output, None
-
-    @staticmethod
-    def _config(discretization: dict | None):
-        if discretization is None:
-            return None
-        return {**DEFAULT_DISCRETIZATION, **discretization}
+def get_state_shape(observation_space) -> tuple[int, ...]:
+    """Return the tabular value-table shape for a discrete observation space."""
+    if isinstance(observation_space, gym.spaces.Discrete):
+        return (observation_space.n,)
+    if isinstance(observation_space, gym.spaces.MultiDiscrete):
+        return tuple(int(x) for x in np.asarray(observation_space.nvec).flat)
+    raise TypeError(
+        "Tabular algorithms require a Discrete or MultiDiscrete observation space. "
+        "Use register_discretized_env for continuous Box observations."
+    )
 
 
 class DiscretizedObservationEnv(gym.ObservationWrapper):
@@ -276,14 +175,10 @@ class DiscretizedObservationEnv(gym.ObservationWrapper):
             )
 
         super().__init__(env)
-        self.discretizer = RLEnvironmentRunner(
-            self.env,
-            discretization=discretization or DEFAULT_DISCRETIZATION,
+        self.discretizer = ObservationDiscretizer(
+            self.env.observation_space,
+            discretization=discretization,
         )
-        if not self.discretizer.discrete_space:
-            raise TypeError(
-                "DiscretizedObservationEnv requires a Box observation space."
-            )
 
         self.discrete_space = self.discretizer.discrete_space
         self.observation_space = gym.spaces.MultiDiscrete(
@@ -292,7 +187,7 @@ class DiscretizedObservationEnv(gym.ObservationWrapper):
 
     def observation(self, observation):
         """Return the observation as per-feature discrete bin indices."""
-        return np.asarray(self.discretizer.get_discrete(observation), dtype=np.int64)
+        return np.asarray(self.discretizer.discretize(observation), dtype=np.int64)
 
 
 def register_discretized_env(
@@ -464,8 +359,77 @@ class HumanEnvironmentRunner:
         return action
 
 
+def run_episode(
+    env: gym.Env,
+    select_action: Callable | None = None,
+    behaviour: Callable | None = None,
+    *,
+    agent=None,
+    seed: int | None = None,
+    close_env: bool = False,
+    render_fn: Callable | None = None,
+    render_each_step: bool = False,
+    store_initial_state: bool = False,
+) -> list[tuple]:
+    """
+    Roll out one episode in a Gymnasium environment.
+
+    With no behaviour policy, transitions are ``(state, action, reward)``.
+    With a behaviour policy that returns ``(action, probability)``, transitions
+    are ``(state, action, probability, reward)``.
+    """
+    if select_action is None:
+        select_action = agent.select_action if agent else lambda _: env.action_space.sample()
+
+    episode: list[tuple] = []
+    reset_kwargs = {} if seed is None else {"seed": seed}
+    state, _ = env.reset(**reset_kwargs)
+    terminated = truncated = False
+
+    while not (terminated or truncated):
+        if render_each_step and render_fn is not None:
+            render_fn(env)
+        elif render_each_step:
+            env.render()
+
+        if behaviour is None:
+            action_output = select_action(state)
+        else:
+            action_output = select_action(state, behaviour)
+        action, probability = _normalize_action_output(action_output)
+
+        next_state, reward, terminated, truncated, _ = env.step(action)
+        stored_state = state if store_initial_state else next_state
+        if probability is None:
+            episode.append((stored_state, action, reward))
+        else:
+            episode.append((stored_state, action, probability, reward))
+        state = next_state
+
+    if close_env:
+        env.close()
+    return episode
+
+
+execute_environment = run_episode
+
+
+def _normalize_action_output(action_output):
+    if isinstance(action_output, tuple) and len(action_output) == 2:
+        return action_output
+    return action_output, None
+
+
 def get_spaces_from_env(env):
-    return RLEnvironmentRunner.from_env(env).get_spaces()
+    """Return ``S, A, n, k`` for environments with discrete spaces."""
+    if not isinstance(env.observation_space, gym.spaces.Discrete) or not isinstance(
+        env.action_space, gym.spaces.Discrete
+    ):
+        raise TypeError(
+            "get_spaces_from_env requires discrete observation and action spaces"
+        )
+    n, k = env.observation_space.n, env.action_space.n
+    return list(range(n)), list(range(k)), n, k
 
 
 def neat_int(arr) -> list[int]:
@@ -487,11 +451,14 @@ __all__ = [
     "DEFAULT_DISCRETIZATION",
     "DiscretizedObservationEnv",
     "HumanEnvironmentRunner",
-    "RLEnvironmentRunner",
+    "ObservationDiscretizer",
     "discretize_interval",
     "even_bin_count",
+    "get_discrete_state",
     "get_spaces_from_env",
+    "get_state_shape",
     "neat_int",
     "print_discrete_space",
     "register_discretized_env",
+    "run_episode",
 ]

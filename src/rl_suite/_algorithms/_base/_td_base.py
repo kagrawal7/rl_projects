@@ -4,11 +4,11 @@ import gymnasium as gym
 import numpy as np
 
 from ._agent_base import AbstractAgent
-from rl_suite.utils.environment import RLEnvironmentRunner
+from rl_suite.utils.environment import get_discrete_state, get_state_shape
 
 
 class _TDBaseAgent(AbstractAgent):
-    """Base tabular TD control agent over a discretized environment runner."""
+    """Base tabular TD control agent over a discrete Gymnasium environment."""
 
     def __init__(
         self,
@@ -33,28 +33,27 @@ class _TDBaseAgent(AbstractAgent):
 
     def control(
         self,
-        env: gym.Env | RLEnvironmentRunner,
+        env: gym.Env,
         *,
         num_timesteps_goal: int = 10000,
         close_env: bool = True,
         log_interval: int = 5000,
     ) -> list[str]:
-        runner = RLEnvironmentRunner.from_env(env)
-        self._initialize_values(runner)
+        self._initialize_values(env)
 
         self.output_logs = []
         success = False
         for num_iter in range(1, self.max_iterations + 1):
-            state, _ = runner.reset()
-            state = runner.get_discrete(state)
+            state, _ = env.reset()
+            state = get_discrete_state(state, env.observation_space)
             action = self.select_action(state, behavior=True)
             count = 0
             finished = False
 
             while not finished:
                 count += 1
-                next_state, reward, terminated, truncated, _ = runner.step(action)
-                next_state = runner.get_discrete(next_state)
+                next_state, reward, terminated, truncated, _ = env.step(action)
+                next_state = get_discrete_state(next_state, env.observation_space)
                 next_action = self.select_action(next_state, behavior=True)
 
                 update = self.update_rule(
@@ -87,7 +86,7 @@ class _TDBaseAgent(AbstractAgent):
         else:
             print(f"Failure to meet goal after {self.max_iterations} iterations.")
         if close_env:
-            runner.close()
+            env.close()
         return self.output_logs
 
     def update_rule(self, state, action, reward, next_state, next_action):
@@ -101,21 +100,14 @@ class _TDBaseAgent(AbstractAgent):
     def get_greedy_action(self, state):
         return int(np.argmax(self.Q[state]))
 
-    def _initialize_values(self, runner: RLEnvironmentRunner) -> None:
-        state_shape = self._state_shape(runner)
-        self._num_actions = runner.action_space.n
+    def _initialize_values(self, env: gym.Env) -> None:
+        state_shape = self._state_shape(env)
+        self._num_actions = env.action_space.n
         self.Q = np.random.random_sample((*state_shape, self._num_actions))
         self._set_terminal_states_to_zero()
 
-    def _state_shape(self, runner: RLEnvironmentRunner) -> tuple[int, ...]:
-        observation_space = runner.observation_space
-        if hasattr(observation_space, "n"):
-            return (observation_space.n,)
-        if hasattr(observation_space, "nvec"):
-            return tuple(int(x) for x in np.asarray(observation_space.nvec).flat)
-        if not runner.discrete_space:
-            runner.discretize_spaces()
-        return tuple(len(space) for space in runner.discrete_space)
+    def _state_shape(self, env: gym.Env) -> tuple[int, ...]:
+        return get_state_shape(env.observation_space)
 
     def _set_terminal_states_to_zero(self) -> None:
         state_dimensions = self.Q.shape[:-1]

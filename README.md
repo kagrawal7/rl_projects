@@ -57,8 +57,9 @@ import rl_suite as rl
 env = gym.make("FrozenLake-v1", render_mode="rgb_array")
 
 utils = rl.RLToolbox.utils
-runner = utils.RLEnvironmentRunner(env)
 render_fn = utils.render_env_in_notebook
+
+utils.run_episode(env, render_fn=render_fn, render_each_step=True)
 ```
 
 For environment-bound utilities:
@@ -67,7 +68,6 @@ For environment-bound utilities:
 toolbox = rl.RLToolbox(env)
 
 human_runner = toolbox.utils.human_agent
-rl_runner = toolbox.utils.rl_agent
 ```
 
 Algorithms are accessed through the package factory:

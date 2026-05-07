@@ -6,11 +6,11 @@ import gymnasium as gym
 import numpy as np
 
 from rl_suite._algorithms._base._agent_base import AbstractAgent
-from rl_suite.utils.environment import RLEnvironmentRunner
+from rl_suite.utils.environment import get_discrete_state, get_state_shape
 
 
 class _OffPolicyAgent(AbstractAgent):
-    """Weighted importance-sampling MC control over a discretized environment."""
+    """Weighted importance-sampling MC control over a discrete environment."""
 
     def __init__(
         self,
@@ -37,20 +37,19 @@ class _OffPolicyAgent(AbstractAgent):
 
     def control(
         self,
-        env: gym.Env | RLEnvironmentRunner,
+        env: gym.Env,
         *,
         num_timesteps_goal: int = 10000,
         close_env: bool = True,
         test_interval: int = 1000,
     ) -> list[str]:
-        runner = RLEnvironmentRunner.from_env(env)
-        self._initialize_policy(runner)
+        self._initialize_policy(env)
 
         self.output_logs = []
         success = False
         for num_iter in range(1, self.max_iterations + 1):
             if test_interval and not num_iter % test_interval:
-                episode = self._run_episode(runner)
+                episode = self._run_episode(env)
                 self.output_logs.append(
                     f"Iteration {num_iter}, Test {num_iter // test_interval}: "
                     f"target policy episode length {len(episode)}"
@@ -59,7 +58,7 @@ class _OffPolicyAgent(AbstractAgent):
                     success = True
                     break
 
-            episode = self._run_episode(runner, self.behavioral)
+            episode = self._run_episode(env, self.behavioral)
             self._learn_from_episode(episode)
 
         if success:
@@ -70,7 +69,7 @@ class _OffPolicyAgent(AbstractAgent):
         else:
             print(f"Failure to meet goal after {self.max_iterations} iterations.")
         if close_env:
-            runner.close()
+            env.close()
         return self.output_logs
 
     def greedy_update(self):
@@ -85,34 +84,48 @@ class _OffPolicyAgent(AbstractAgent):
             return self._epsilon_soft_behavior(state, action)
         raise ValueError(f"Unsupported behavior policy: {self.behavior!r}")
 
-    def _initialize_policy(self, runner: RLEnvironmentRunner) -> None:
-        state_shape = self._state_shape(runner)
-        num_actions = runner.action_space.n
+    def _initialize_policy(self, env: gym.Env) -> None:
+        state_shape = self._state_shape(env)
+        num_actions = env.action_space.n
         self.table = np.random.random_sample((*state_shape, num_actions, 2))
         self.table[..., 1] = 0
         self.greedy_update()
 
-    def _state_shape(self, runner: RLEnvironmentRunner) -> tuple[int, ...]:
-        observation_space = runner.observation_space
-        if hasattr(observation_space, "n"):
-            return (observation_space.n,)
-        if hasattr(observation_space, "nvec"):
-            return tuple(int(x) for x in np.asarray(observation_space.nvec).flat)
-        if not runner.discrete_space:
-            runner.discretize_spaces()
-        return tuple(len(space) for space in runner.discrete_space)
+    def _state_shape(self, env: gym.Env) -> tuple[int, ...]:
+        return get_state_shape(env.observation_space)
 
     def _run_episode(
         self,
-        runner: RLEnvironmentRunner,
+        env: gym.Env,
         behaviour: Callable | None = None,
     ) -> list[tuple]:
-        return runner.run_episode(
-            self.select_action,
-            behaviour,
-            discretize_actions=True,
-            store_initial_state=True,
-        )
+        episode: list[tuple] = []
+        state, _ = env.reset()
+        state = get_discrete_state(state, env.observation_space)
+        terminated = truncated = False
+
+        while not (terminated or truncated):
+            if behaviour is None:
+                action_output = self.select_action(state)
+            else:
+                action_output = self.select_action(state, behaviour)
+            action, probability = self._normalize_action_output(action_output)
+
+            next_state, reward, terminated, truncated, _ = env.step(action)
+            if probability is None:
+                episode.append((state, action, reward))
+            else:
+                episode.append((state, action, probability, reward))
+            if not (terminated or truncated):
+                state = get_discrete_state(next_state, env.observation_space)
+
+        return episode
+
+    @staticmethod
+    def _normalize_action_output(action_output):
+        if isinstance(action_output, tuple) and len(action_output) == 2:
+            return action_output
+        return action_output, None
 
     def _learn_from_episode(self, episode: list[tuple]) -> None:
         returns, weight = 0, 1
