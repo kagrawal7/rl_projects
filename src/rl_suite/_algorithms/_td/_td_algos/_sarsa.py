@@ -1,5 +1,5 @@
 from rl_suite._algorithms._base._td_base import _TDBaseAgent
-import numpy as np
+
 
 class _Sarsa(_TDBaseAgent):
     """On-policy SARSA."""

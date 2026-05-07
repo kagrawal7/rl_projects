@@ -1,9 +1,9 @@
-from ._algorithms import Algorithms
+from . import algorithms
 from .utils import _Utilities
 
 
 class RLToolbox:
-    algorithms = Algorithms
+    algorithms = algorithms
     utils = _Utilities()
 
     def __init__(self, env=None, discretization: dict | None = None):

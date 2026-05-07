@@ -70,14 +70,14 @@ toolbox = rl.RLToolbox(env)
 human_runner = toolbox.utils.human_agent
 ```
 
-Algorithms are accessed through the package factory:
+Algorithms are accessed through environment-agnostic namespaces:
 
 ```python
-agent = rl.algorithms(env)
+import rl_suite.algorithms as algs
 
-sarsa_agent = agent.td.sarsa
-q_learning_agent = agent.td.q_learning
-mc_agent = agent.mc.off_policy
+sarsa_agent = algs.td.sarsa(env)
+q_learning_agent = algs.td.q_learning(env)
+mc_agent = algs.mc.off_policy(env)
 ```
 
 ## Notebooks

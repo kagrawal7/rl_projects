@@ -5,8 +5,8 @@ from ._td_algos._sarsa import _Sarsa
 
 
 class _TD:
-    def __init__(self, env):
+    def __init__(self):
         # self.off_policy = _OffPolicyAgent()
-        self.sarsa = _Sarsa(env)
-        self.expected_sarsa = _ExpectedSarsa(env)
-        self.q_learning = _QLearning(env)
+        self.sarsa = _Sarsa
+        self.expected_sarsa = _ExpectedSarsa
+        self.q_learning = _QLearning

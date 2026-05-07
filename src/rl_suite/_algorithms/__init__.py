@@ -1,24 +1,4 @@
-# """Tabular RL agents."""
+from .algo_caller import _Algorithms
 
-# from __future__ import annotations
 
-# from .gpi.gpi_algos.deterministic_gpi import DeterministicPI
-# from .gpi.gpi_algos.stochastic_gpi import StochasticPI
-# from .gpi.gpi_algos.value_iteration import ValueIterClass
-# from .mc import OffPolicyMCAgent
-# from .td import ExpectedSarsaAgent, QLearningAgent, SarsaAgent, TDAgent
-
-# __all__ = [
-#     "DeterministicPI",
-#     "ExpectedSarsaAgent",
-#     "OffPolicyMCAgent",
-#     "QLearningAgent",
-#     "SarsaAgent",
-#     "StochasticPI",
-#     "TDAgent",
-#     "ValueIterClass",
-# ]
-
-from .algo_caller import Algorithms
-
-__all__ = ["Algorithms"]
+__all__ = ["_Algorithms"]
