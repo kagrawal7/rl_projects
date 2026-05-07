@@ -1,4 +1,4 @@
-import rl_suite.RLToolbox.callbacks as callbacks
+import rl_suite.callbacks as callbacks
 
 
 def test_history_callback_records_events():

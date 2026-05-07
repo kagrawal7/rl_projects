@@ -5,6 +5,7 @@ from importlib import import_module
 
 _PUBLIC_SUBMODULES = frozenset({
     "algos",
+    "callbacks",
     "dp",
     "environments",
     "experiments",

@@ -18,8 +18,8 @@ notebooks into a package.
 |   `-- cartpole_td.ipynb
 |-- src/
 |   `-- rl_suite/
-|       |-- RLToolbox/          # legacy namespace
 |       |-- algos/
+|       |-- callbacks/
 |       |-- environments/
 |       |-- experiments/
 |       |-- visualization/
@@ -90,6 +90,12 @@ print(td.get_implemented_algos())
 agent = td.QLearning(env)
 ```
 
+Experiment callbacks are available from the package-level callbacks module:
+
+```python
+from rl_suite.callbacks import CallbackList, RolloutCallback
+```
+
 ## Notebooks
 
 The notebooks demonstrate the package APIs without reimplementing environment
@@ -111,9 +117,8 @@ jupyter lab
 ## Development Notes
 
 - Public algorithm classes live under `src/rl_suite/algos`.
+- Public callback hooks live under `src/rl_suite/callbacks`.
 - Public environment helpers live under `src/rl_suite/environments`.
 - Public experiment helpers live under `src/rl_suite/experiments`.
 - Internal implementation code remains under `src/rl_suite/_algorithms` and
   `src/rl_suite/_utilities`.
-- The legacy `rl_suite.RLToolbox` namespace remains available for older
-  notebooks, but new code should prefer the public domain modules above.

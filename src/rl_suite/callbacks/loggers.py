@@ -62,8 +62,14 @@ class EpisodeReturnCallback(Callback):
 
     def on_episode_end(self, data=None):
         data = data or {}
-        episode_return = data.get("return", data.get("episode_return", self.current_return))
-        episode_length = data.get("length", data.get("episode_length", self.current_length))
+        episode_return = data.get(
+            "return",
+            data.get("episode_return", self.current_return),
+        )
+        episode_length = data.get(
+            "length",
+            data.get("episode_length", self.current_length),
+        )
         self.returns.append(episode_return)
         self.lengths.append(episode_length)
 

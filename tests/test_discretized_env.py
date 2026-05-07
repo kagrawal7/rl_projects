@@ -1,6 +1,6 @@
 import gymnasium as gym
 
-import rl_suite.RLToolbox.utilities as utils
+import rl_suite.environments as envs
 
 
 CARTPOLE_DISCRETIZATION = {
@@ -10,7 +10,7 @@ CARTPOLE_DISCRETIZATION = {
 
 
 def test_discretized_observation_env_wraps_cartpole_observations():
-    env = utils.DiscretizedObservationEnv(
+    env = envs.DiscretizedObservationEnv(
         "CartPole-v1",
         discretization=CARTPOLE_DISCRETIZATION,
     )
@@ -26,7 +26,7 @@ def test_discretized_observation_env_wraps_cartpole_observations():
 
 
 def test_register_discretized_env_makes_local_gymnasium_env():
-    env_id = utils.register_discretized_env(
+    env_id = envs.register_discretized_env(
         "CartPole-v1",
         id="rl_suite/TestDiscretizedCartPole-v0",
         discretization=CARTPOLE_DISCRETIZATION,

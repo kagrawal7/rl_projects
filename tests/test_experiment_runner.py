@@ -1,4 +1,4 @@
-import rl_suite.RLToolbox.callbacks as callbacks
+import rl_suite.callbacks as callbacks
 from rl_suite.experiments import GymExperiment, choose_action
 
 

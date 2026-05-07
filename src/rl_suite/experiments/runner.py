@@ -3,7 +3,7 @@ from time import perf_counter
 import gymnasium as gym
 import numpy as np
 
-from rl_suite.RLToolbox.callbacks import CallbackList
+from rl_suite.callbacks import CallbackList
 
 
 class GymExperiment:

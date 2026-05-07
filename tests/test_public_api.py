@@ -1,6 +1,10 @@
+import importlib
+
 import gymnasium as gym
+import pytest
 
 import rl_suite
+import rl_suite.callbacks as callbacks
 from rl_suite import dp, mc, td
 from rl_suite.algos import QLearning, SARSA, ExpectedSARSA, ValueIteration
 from rl_suite.environments import DiscretizedObservationEnv
@@ -43,6 +47,7 @@ def test_family_modules_support_algorithm_imports():
 def test_public_helpers_are_importable_from_domain_modules():
     assert DiscretizedObservationEnv is not None
     assert callable(render_env_in_notebook)
+    assert callbacks.CallbackList is not None
 
 
 def test_public_algorithms_can_be_instantiated():
@@ -52,3 +57,8 @@ def test_public_algorithms_can_be_instantiated():
         assert agent.env is env
     finally:
         env.close()
+
+
+def test_removed_toolbox_namespace_is_not_importable():
+    with pytest.raises(ModuleNotFoundError):
+        importlib.import_module("rl_suite.RLToolbox")

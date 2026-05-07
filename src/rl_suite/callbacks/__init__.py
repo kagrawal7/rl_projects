@@ -1,4 +1,4 @@
-"""Callback hooks and small metric loggers for RL experiments."""
+"""Callback hooks and metric loggers for RL experiments."""
 
 from .base import Callback, CallbackList
 from .loggers import (
