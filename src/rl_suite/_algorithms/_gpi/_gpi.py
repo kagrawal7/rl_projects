@@ -1,5 +1,4 @@
 
-from rl_suite._algorithms.agent_base import AbstractAgent
 from ._gpi_algos._deterministic_gpi import _Deterministic
 from ._gpi_algos._stochastic_gpi import _Stochastic
 from ._gpi_algos._value_iteration import _ValueIteration

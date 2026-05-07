@@ -1,5 +1,4 @@
 # from .off_policy.off_policy_agent import _OffPolicyAgent
-from rl_suite._algorithms.agent_base import AbstractAgent
 from ._td_algos._expected_sarsa import _ExpectedSarsa
 from ._td_algos._q_learning import _QLearning
 from ._td_algos._sarsa import _Sarsa

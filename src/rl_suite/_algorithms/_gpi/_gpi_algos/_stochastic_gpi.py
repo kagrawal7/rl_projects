@@ -1,4 +1,4 @@
-from ._gpi_base import _GPIBaseAgent
+from rl_suite._algorithms._base._gpi_base import _GPIBaseAgent
 import numpy as np
 
 class _Stochastic(_GPIBaseAgent):

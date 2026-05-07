@@ -1,4 +1,4 @@
-from rl_suite._algorithms.agent_base import AbstractAgent
+from rl_suite._algorithms._base._agent_base import AbstractAgent
 from ._off_policy._off_policy_control import _OffPolicyAgent
 
 

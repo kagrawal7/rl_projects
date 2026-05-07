@@ -3,7 +3,7 @@ from __future__ import annotations
 import gymnasium as gym
 import numpy as np
 
-from rl_suite._algorithms.agent_base import AbstractAgent
+from ._agent_base import AbstractAgent
 from rl_suite.utils.environment import RLEnvironmentRunner
 
 
@@ -131,4 +131,4 @@ class _TDBaseAgent(AbstractAgent):
 
 
 
-__all__ = ["ExpectedSarsaAgent", "QLearningAgent", "SarsaAgent", "_TDBaseAgent"]
+__all__ = ["_TDBaseAgent"]

@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from ...agent_base import AbstractAgent
+from ._agent_base import AbstractAgent
 
 
 class _GPIBaseAgent(AbstractAgent):
