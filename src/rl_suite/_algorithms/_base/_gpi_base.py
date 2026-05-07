@@ -38,7 +38,7 @@ class _GPIBaseAgent(AbstractAgent):
         if self.no_policy_set:
             self._intialize_policy()
 
-    def policy_evaluation(self, print_num_iter=False):
+    def policy_evaluation(self, print_num_iter=False, callbacks=None):
         """Evaluate policy using dynamic programming policy evaluation."""
         if self.theta <= 0:
             raise ValueError("Theta must be positive number!")
@@ -52,8 +52,17 @@ class _GPIBaseAgent(AbstractAgent):
                 old_val = self.V[s]
                 self.V[s] = self._value_update(s)
                 delta = max(delta, abs(old_val - self.V[s]))
+            if callbacks is not None:
+                callbacks.on_update({
+                    "phase": "policy_evaluation",
+                    "sweep": num_iter,
+                    "delta": delta,
+                    "values": self.V,
+                    "policy": self.policy,
+                })
             if delta < self.theta:
                 break
+        self.last_evaluation_sweeps = num_iter
         if print_num_iter:
             print(
                 f"theta={self.theta} and gamma={self.gamma} ====> "

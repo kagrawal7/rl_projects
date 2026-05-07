@@ -1,3 +1,4 @@
+import rl_suite.RLToolbox.callbacks as callbacks
 from rl_suite.experiments import GymExperiment, choose_action
 
 
@@ -34,6 +35,24 @@ def test_gym_experiment_runs_registered_env_and_algorithm_configs():
     assert rows[0]["history"] == ["trained"]
     assert rows[0]["config"] == config
     assert "mean_reward" in rows[0]
+
+
+def test_gym_experiment_accepts_callback_factory():
+    experiment = GymExperiment("FrozenLake-v1", AlwaysLeft, env_kwargs={
+        "map_name": "4x4",
+        "is_slippery": False,
+    })
+
+    rows = experiment.run(
+        configs=[{"agent": {"tag": "one"}}, {"agent": {"tag": "two"}}],
+        callbacks=lambda config: [callbacks.RolloutCallback()],
+        eval_episodes=1,
+        seed=4,
+    )
+
+    assert rows[0]["callbacks"] is not rows[1]["callbacks"]
+    assert rows[0]["callbacks"].callbacks[0].lengths
+    assert rows[1]["callbacks"].callbacks[0].lengths
 
 
 def test_choose_action_supports_predict_style_agents():

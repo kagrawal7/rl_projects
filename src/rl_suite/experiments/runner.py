@@ -3,6 +3,8 @@ from time import perf_counter
 import gymnasium as gym
 import numpy as np
 
+from rl_suite.RLToolbox.callbacks import CallbackList
+
 
 class GymExperiment:
     def __init__(self, env, algorithm, env_kwargs=None, train=None, act=None):
@@ -29,9 +31,11 @@ class GymExperiment:
             return self.algorithm(env, **config)
         return self.algorithm(env, **config)
 
-    def run(self, configs=None, eval_episodes=20, seed=0):
+    def run(self, configs=None, eval_episodes=20, seed=0, callbacks=None):
         rows = []
         for raw_config in configs or [{}]:
+            callback_list = as_callbacks(callbacks, raw_config)
+            callback_list.reset()
             config = dict(raw_config)
             env_config = config.pop("env", {})
             agent_config = config.pop("agent", config)
@@ -39,7 +43,7 @@ class GymExperiment:
             agent = self.make_agent(env, agent_config)
 
             start = perf_counter()
-            history = train_agent(agent, env, self.train)
+            history = train_agent(agent, env, self.train, callback_list)
             train_time = perf_counter() - start
 
             scores = evaluate(
@@ -48,10 +52,12 @@ class GymExperiment:
                 episodes=eval_episodes,
                 seed=seed,
                 act=self.act,
+                callbacks=callback_list,
             )
             rows.append({
                 "config": raw_config,
                 "agent": agent,
+                "callbacks": callback_list,
                 "history": history,
                 "train_time": train_time,
                 **scores,
@@ -60,22 +66,52 @@ class GymExperiment:
         return rows
 
 
-def train_agent(agent, env, train=None):
+def as_callbacks(callbacks=None, config=None):
+    if callable(callbacks) and not hasattr(callbacks, "on_update"):
+        callbacks = callbacks(config)
+    if callbacks is None:
+        return CallbackList()
+    if isinstance(callbacks, CallbackList):
+        return callbacks
+    if isinstance(callbacks, (list, tuple)):
+        return CallbackList([callback() if isinstance(callback, type) else callback for callback in callbacks])
+    if isinstance(callbacks, type):
+        return CallbackList([callbacks()])
+    return CallbackList([callbacks])
+
+
+def train_agent(agent, env, train=None, callbacks=None):
     if train is not None:
-        return train(agent, env)
+        try:
+            return train(agent, env, callbacks)
+        except TypeError:
+            return train(agent, env)
     for name in ("train", "learn", "fit", "control"):
         if hasattr(agent, name):
-            return getattr(agent, name)(env)
+            method = getattr(agent, name)
+            try:
+                return method(env, callbacks=callbacks)
+            except TypeError:
+                return method(env)
     return None
 
 
-def evaluate(agent, env_factory, episodes=20, seed=0, act=None, max_steps=1000):
+def evaluate(agent, env_factory, episodes=20, seed=0, act=None, max_steps=1000, callbacks=None):
     rewards, lengths, last_path = [], [], []
     successes = 0
 
     for i in range(episodes):
         env = env_factory(seed + i)
         reward, steps, done, path = play(env, agent, seed + i, act, max_steps)
+        if callbacks is not None:
+            callbacks.on_episode_end({
+                "episode": i,
+                "return": reward,
+                "length": steps,
+                "success": done,
+                "path": path,
+                "phase": "eval",
+            })
         rewards.append(reward)
         lengths.append(steps)
         last_path = path
